@@ -13,8 +13,8 @@
 *.a
 
 #build/bin directory
-build/*
-bin/*
+*build/*
+*bin/*
 
 #temporary files
 *~
