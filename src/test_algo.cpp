@@ -12,5 +12,6 @@ int main(int argc, char** argv) {
 	}else{
 		std::cout << "No path exists between the given start and end points" << std::endl;
 	}
+	std::cout << "fin" << std::endl;
 
 }

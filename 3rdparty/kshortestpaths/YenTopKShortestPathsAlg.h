@@ -15,6 +15,9 @@
 
 using namespace std;
 
+
+namespace kshortestpaths{
+
 class YenTopKShortestPathsAlg
 {
 	Graph* m_pGraph;
@@ -56,3 +59,5 @@ public:
 	void get_shortest_paths(BaseVertex* pSource, BaseVertex* pTarget, int top_k, 
 		vector<BasePath*>&);
 };
+
+}

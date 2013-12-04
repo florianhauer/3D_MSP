@@ -18,6 +18,8 @@
 #include "Graph.h"
 #include "DijkstraShortestPathAlg.h"
 
+namespace kshortestpaths{
+
 BasePath* DijkstraShortestPathAlg::get_shortest_path( BaseVertex* source, BaseVertex* sink )
 {
 	determine_shortest_paths(source, sink, true);
@@ -231,4 +233,6 @@ void DijkstraShortestPathAlg::correct_cost_backward( BaseVertex* vertex )
 			}
 		}
 	}
+}
+
 }

@@ -14,6 +14,9 @@
 #include <string>
 #include <iostream>
 
+
+namespace kshortestpaths{
+
 template<class T>
 class WeightGreater
 {
@@ -157,3 +160,5 @@ public:
 		out_stream << std::endl <<  "*********************************************" << std::endl;
 	}
 };
+
+}

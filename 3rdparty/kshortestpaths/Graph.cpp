@@ -21,12 +21,18 @@
 #include "Graph.h"
 
 
+namespace kshortestpaths{
 const double Graph::DISCONNECT = (numeric_limits<double>::max)();
 
 
 Graph::Graph( const string& file_name )
 {
 	_import_from_file(file_name);
+}
+
+Graph::Graph()
+{
+
 }
 
 Graph::Graph( const Graph& graph )
@@ -282,4 +288,6 @@ double Graph::get_original_edge_weight( const BaseVertex* source, const BaseVert
 	{
 		return DISCONNECT;
 	}
+}
+
 }

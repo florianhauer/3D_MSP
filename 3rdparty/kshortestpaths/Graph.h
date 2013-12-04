@@ -11,8 +11,11 @@
 
 
 #pragma once
+#include "GraphElements.h"
+#include <set>
 
 using namespace std;
+namespace kshortestpaths{
 
 class Path : public BasePath
 {
@@ -61,6 +64,7 @@ public:
 
 	// Constructors and Destructor
 	Graph(const string& file_name);
+	Graph();
 	Graph(const Graph& rGraph);
 	~Graph(void);
 
@@ -112,3 +116,4 @@ private:
 	void _import_from_file(const std::string& file_name);
 
 };
+}

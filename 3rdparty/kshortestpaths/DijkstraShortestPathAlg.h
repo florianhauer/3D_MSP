@@ -15,6 +15,8 @@
 
 using namespace std;
 
+namespace kshortestpaths{
+
 class DijkstraShortestPathAlg
 {
 private: // members
@@ -67,3 +69,5 @@ protected:
 	void improve2vertex(BaseVertex* cur_vertex_pt, bool is_source2sink);
 
 };
+
+}

@@ -1,6 +1,9 @@
 
 #include <octomap/octomap.h>
 #include <octomap/OcTree.h>
+#include <deque>
+#include <map>
+#include "Graph.h"
 
 namespace msp{
 	class MSP3D{
@@ -9,10 +12,20 @@ namespace msp{
 			bool init(octomap::point3d start,octomap::point3d end);
 			bool step();
 			bool run();
-			void getPath();
+			std::deque<octomap::OcTreeKey> getPath();
 		protected:
-			void tree2nodes();
-			void nodesAdjacency();
+			void reducedGraph();
+			void iterativeReducedGraph(octomap::OcTree::NodeType *n);
 			void kthShortestPath();
+			octomap::OcTreeKey m_start;
+			octomap::OcTreeKey m_end;
+			octomap::OcTreeKey m_current_point;
+			octomap::point3d m_current_coord;
+			octomap::OcTree m_tree;
+			bool m_path_found;
+			std::deque<octomap::OcTreeKey> m_current_path;
+			kshortestpaths::Graph m_graph;
+			std::map<octomap::OcTreeKey,double> m_visited;
+			double m_alpha;//used in reduced graph as parameter for decomposition
 	};
 }

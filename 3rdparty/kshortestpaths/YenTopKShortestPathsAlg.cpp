@@ -22,6 +22,9 @@
 
 using namespace std;
 
+
+namespace kshortestpaths{
+
 void YenTopKShortestPathsAlg::clear()
 {
 	m_nGeneratedPathNum = 0;
@@ -206,4 +209,6 @@ void YenTopKShortestPathsAlg::get_shortest_paths( BaseVertex* pSource,
 	}
 
 	result_list.assign(m_vResultList.begin(),m_vResultList.end());
+}
+
 }

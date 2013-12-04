@@ -17,6 +17,7 @@
 #include "YenTopKShortestPathsAlg.h"
 
 using namespace std;
+using namespace kshortestpaths;
 
 
 void testDijkstraGraph()
