@@ -70,6 +70,9 @@ public:
 
 	void clear();
 
+	void add_vertex(int node_id);
+	void add_edge(int start_vertex, int end_vertex, double edge_weight);
+
 	BaseVertex* get_vertex(int node_id);
 	
 	int get_edge_code(const BaseVertex* start_vertex_pt, const BaseVertex* end_vertex_pt) const;

@@ -9,3 +9,6 @@
 
 
 ADD_LIBRARY(kshortestpaths DijkstraShortestPathAlg.cpp Graph.cpp YenTopKShortestPathsAlg.cpp)
+
+ADD_EXECUTABLE(test_graph MainP.cpp)
+TARGET_LINK_LIBRARIES(test_graph kshortestpaths)

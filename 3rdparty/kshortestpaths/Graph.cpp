@@ -134,6 +134,33 @@ void Graph::_import_from_file( const string& input_file_name )
 	ifs.close();	
 }
 
+void Graph::add_vertex(int node_id){
+	BaseVertex* vertex_pt = NULL;
+	vertex_pt = new BaseVertex();
+	vertex_pt->setID(node_id);
+	m_mpVertexIndex[node_id] = vertex_pt;
+	m_vtVertices.push_back(vertex_pt);
+	m_nVertexNum = m_vtVertices.size();
+}
+
+void Graph::add_edge(int start_vertex, int end_vertex, double edge_weight){
+	///3.2.1 construct the vertices
+	BaseVertex* start_vertex_pt = get_vertex(start_vertex);
+	BaseVertex* end_vertex_pt = get_vertex(end_vertex);
+
+	///3.2.2 add the edge weight
+	//// note that the duplicate edge would overwrite the one occurring before.
+	m_mpEdgeCodeWeight[get_edge_code(start_vertex_pt, end_vertex_pt)] = edge_weight;
+
+	///3.2.3 update the fan-in or fan-out variables
+	//// Fan-in
+	get_vertex_set_pt(end_vertex_pt, m_mpFaninVertices)->insert(start_vertex_pt);
+
+	//// Fan-out
+	get_vertex_set_pt(start_vertex_pt, m_mpFanoutVertices)->insert(end_vertex_pt);
+	m_nEdgeNum = m_mpEdgeCodeWeight.size();
+}
+
 BaseVertex* Graph::get_vertex( int node_id )
 {
 	if (m_stRemovedVertexIds.find(node_id) != m_stRemovedVertexIds.end())
