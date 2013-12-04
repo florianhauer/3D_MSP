@@ -35,6 +35,7 @@ std::deque<octomap::OcTreeKey> MSP3D::getPath(){return m_current_path;}
 
 void MSP3D::reducedGraph(){
 	m_graph=kshortestpaths::Graph();
+	m_nodes.clear();
 	octomap::OcTree::tree_iterator it_end=m_tree.end_tree();
 	bool skip=false;
 	int depth=0;
@@ -46,15 +47,26 @@ void MSP3D::reducedGraph(){
 		}
 		if(!skip){
 			if((it.getCoordinate()-m_current_coord).norm()>m_alpha*it.getSize()){
-				//if it far enough
-				//add it to graph
-				//compute vertices
-
+				m_nodes.push_back(std::pair<octomap::OcTreeKey,double>(it.getKey(),it.getSize()));
 				skip=true;
 				depth=it.getDepth();
 			}
 		}
 	}
+	int l=m_nodes.size();
+	for(int i=0;i<l;++i){
+		//m_graph.addVertex(i);
+		for(int j=i+1;j<l;++j){
+				if(neighboor(m_nodes[i],m_nodes[j])){
+					//m_graph.addEdge(i,j);
+					//m_graph.addEdge(j,i);
+				}
+		}
+	}
+}
+
+bool MSP3D::neighboor(std::pair<octomap::OcTreeKey,double> &na,std::pair<octomap::OcTreeKey,double> &nb){
+	return true;
 }
 
 void MSP3D::kthShortestPath(){}
