@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <utility>
+#include <string>
 #include "Graph.h"
 
 class Point3D_Less :
@@ -42,6 +43,7 @@ namespace msp{
 			bool is_goal(std::pair<octomap::point3d,double> &node);
 			bool is_in(octomap::point3d pt,std::pair<octomap::point3d,double> &node);
 			double cost(int i, int j);
+			void visu(std::string filename, kshortestpaths::BasePath* path);
 			octomap::OcTreeKey m_start;
 			octomap::OcTreeKey m_end;
 			octomap::point3d m_start_coord;
@@ -61,5 +63,6 @@ namespace msp{
 			double m_M;
 			double m_lambda1;
 			double m_lambda2;
+			int m_max_tree_depth;
 	};
 }
