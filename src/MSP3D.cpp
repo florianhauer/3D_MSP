@@ -1,5 +1,6 @@
 #include "MSP3D.h"
 #include "YenTopKShortestPathsAlg.h"
+#include <set>
 
 
 namespace msp{
@@ -17,12 +18,26 @@ bool MSP3D::init(octomap::point3d start,octomap::point3d end){
 }
 
 bool MSP3D::step(){
+	std::cout << "Calculate Graph" << std::endl;
 	reducedGraph();
+	std::set<kshortestpaths::BaseVertex*>  res;
+	for(int i=0;i<8;++i){
+		std::cout << std::endl << "vertex " << i << " ID " << m_graph.get_vertex(i)->getID() <<std::endl;
+		m_graph.get_adjacent_vertices(m_graph.get_vertex(i), res);
+		for(std::set<kshortestpaths::BaseVertex*>::iterator it=res.begin(),end=res.end();it!=end;++it){
+			//kshortestpaths::BaseVertex* k=*it;
+			std::cout << "neighboor with " << (*it)->getID() <<std::endl;
+			res.clear();
+		}
+	}
 	// shortest path
 	kshortestpaths::YenTopKShortestPathsAlg yenAlg(m_graph, m_graph.get_vertex(m_start_index),m_graph.get_vertex(m_end_index));
 	bool got_next=false;
+	std::cout << "Solve shortest path" << std::endl;
 	if(m_visited.count(m_current_coord)==0){
+		std::cout << "First visit" << std::endl;
 		if(yenAlg.has_next()){
+			std::cout << "Existing path" << std::endl;
 			got_next=true;
 			m_visited[m_current_coord]=0;
 		}
@@ -36,8 +51,10 @@ bool MSP3D::step(){
 			got_next=true;
 		}
 	}
+	std::cout << "End of step update" << std::endl;
 	//if solution
 	if(got_next){
+		std::cout << "shortest path found" << std::endl;
 		//go forward // if goal return false;
 		int next_point_id=yenAlg.next()->GetVertex(1)->getID();
 		//do stuff to prepare next iteration
@@ -47,11 +64,14 @@ bool MSP3D::step(){
 		m_current_coord=m_nodes[next_point_id].first;
 
 		if(next_point_id==m_end_index){
+			std::cout << "goal reached" << std::endl;
+			m_path_found=true;
 			return false;
 		}else{
 			return true;
 		}
 	}else{
+		std::cout << "shortest path not found" << std::endl;
 		//go back // if path empty => no solution return false
 		m_visited[m_current_coord]=0;
 		m_current_path.pop_back();
@@ -88,8 +108,8 @@ void MSP3D::reducedGraph(){
 				skip=false;
 			}
 		}
-		if(!skip){
-			if((it.getCoordinate()-m_current_coord).norm()>m_alpha*it.getSize()){
+		if(!skip || it.isLeaf()){
+			if((it.getCoordinate()-m_current_coord).norm()>m_alpha*it.getSize()  || it.isLeaf()){
 				m_nodes.push_back(std::pair<octomap::point3d,double>(it.getCoordinate(),it.getSize()));
 				skip=true;
 				depth=it.getDepth();
@@ -99,15 +119,22 @@ void MSP3D::reducedGraph(){
 	int l=m_nodes.size();
 	for(int i=0;i<l;++i){
 		// !!!!!!!!!!!!!  if not in path?
+		std::cout<< "node " << i << ":" << m_nodes[i].first <<std::endl;
 		m_graph.add_vertex(i);
 		if(is_start(m_nodes[i])){
 			m_start_index=i;
+			std::cout<<"start: "<< m_nodes[i].first <<std::endl;
 		}
 		if(is_goal(m_nodes[i])){
 			m_end_index=i;
+			std::cout<<"end: "<< m_nodes[i].first <<std::endl;
 		}
+	}
+	for(int i=0;i<l;++i){
 		for(int j=i+1;j<l;++j){
 				if(neighboor(m_nodes[i],m_nodes[j])){
+					std::cout<< "neighboor:" << i << "," << j <<std::endl;
+					std::cout<< "cost:" << cost(i,j) <<std::endl;
 					m_graph.add_edge(i,j,cost(i,j));
 					m_graph.add_edge(j,i,cost(j,i));
 				}
@@ -136,7 +163,7 @@ double MSP3D::cost(int i, int j){
 	// (lambda1 * cost(j) + lambda2)*Volume(j)
 	//else
 	// M
-	return 0.0;
+	return m_tree.search(m_nodes[j].first)->getOccupancy();
 }
 
 bool MSP3D::neighboor(std::pair<octomap::point3d,double> &na,std::pair<octomap::point3d,double> &nb){

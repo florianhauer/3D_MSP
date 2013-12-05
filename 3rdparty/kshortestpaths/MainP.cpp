@@ -64,18 +64,33 @@ void testYenAlg()
 }
 void testYenAlg2()
 {
-	Graph my_graph("/home/florian/workspace/3D_MSP/3rdparty/kshortestpaths/data/test_1");
+	kshortestpaths::Graph my_graph;
+	for(int i=0;i<8;++i){
+		my_graph.add_vertex(i);
+	}
+	for(int i=0;i<5;++i){
+		my_graph.add_edge(i,i+1,0.4);
+		my_graph.add_edge(i,i+2,0.4);
+		my_graph.add_edge(i,i+3,0.4);
+	}
+	my_graph.add_edge(5,5+1,0.4);
+	my_graph.add_edge(5,5+2,0.4);
+	my_graph.add_edge(5,0,0.4);
+	my_graph.add_edge(6,6+1,0.4);
+	my_graph.add_edge(6,0,0.4);
+	my_graph.add_edge(6,1,0.4);
+	my_graph.add_edge(7,0,0.4);
+	my_graph.add_edge(7,1,0.4);
+	my_graph.add_edge(7,2,0.4);
 
-	YenTopKShortestPathsAlg yenAlg(my_graph, my_graph.get_vertex(0),
-		my_graph.get_vertex(5));
+	YenTopKShortestPathsAlg yenAlg(my_graph, my_graph.get_vertex(6),
+		my_graph.get_vertex(7));
 
 	int i=0;
 	while(yenAlg.has_next())
 	{
 		++i;
-		if(i%2==1){
-			yenAlg.next()->PrintOut(cout);
-		}
+		yenAlg.next()->PrintOut(cout);
 	}
 
 // 	System.out.println("Result # :"+i);
@@ -86,12 +101,12 @@ void testYenAlg2()
 
 int main(...)
 {
-	cout << "Welcome to the real world!" << endl;
+//	cout << "Welcome to the real world!" << endl;
 
 	//testDijkstraGraph();
-	cout << "Yen" << endl;
-	testYenAlg();
+//	cout << "Yen" << endl;
+//	testYenAlg();
 	cout << "Yen 2" << endl;
 	testYenAlg2();
-	testDijkstraGraphDisconnectedGraph();
+//	testDijkstraGraphDisconnectedGraph();
 }

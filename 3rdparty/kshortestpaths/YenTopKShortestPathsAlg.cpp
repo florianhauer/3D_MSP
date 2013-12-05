@@ -43,7 +43,12 @@ void YenTopKShortestPathsAlg::_init()
 		{
 			m_quPathCandidates.insert(pShortestPath);
 			m_mpDerivationVertexIndex[pShortestPath] = m_pSourceVertex;
+		}else{
+			std::cout<< "shortest path doesnt exists or of length 1" << std::endl;
+			pShortestPath->PrintOut(cout);
 		}
+	}else{
+		std::cout<< "source/dest problem" << std::endl;
 	}
 }
 
