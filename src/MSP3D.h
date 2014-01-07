@@ -30,12 +30,14 @@ public binary_function<octomap::point3d, octomap::point3d, bool> {
 namespace msp{
 	class MSP3D{
 		public:
-			MSP3D(octomap::OcTree &tree);
+			MSP3D(octomap::OcTree &tree,int max_depth);
 			bool init(octomap::point3d start,octomap::point3d end);
 			bool step();
 			bool run();
 			std::deque<octomap::point3d> getPath();
+			double getPathCost();
 		protected:
+			double low_cost(octomap::point3d pt);
 			void reducedGraph();
 			void iterativeReducedGraph(octomap::OcTree::NodeType *n);
 			bool neighboor(std::pair<octomap::point3d,double> &na,std::pair<octomap::point3d,double> &nb);
@@ -60,6 +62,7 @@ namespace msp{
 			double m_alpha;//used in reduced graph as parameter for decomposition
 			std::vector<std::pair<octomap::point3d,double> > m_nodes; //coord,size
 			double m_eps;//used as margin for comparison (small compared to tree resolution)
+			double m_epsilon;
 			double m_M;
 			double m_lambda1;
 			double m_lambda2;

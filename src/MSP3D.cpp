@@ -2,10 +2,14 @@
 #include "YenTopKShortestPathsAlg.h"
 #include <set>
 #include <octomap/ColorOcTree.h>
+#include <cmath>
 
 
 namespace msp{
-MSP3D::MSP3D(octomap::OcTree &tree):m_tree(tree),m_path_found(false),m_alpha(1.0),m_eps(tree.getResolution()/10.0),m_max_tree_depth(3) {}
+MSP3D::MSP3D(octomap::OcTree &tree, int max_depth):m_tree(tree),m_path_found(false),m_alpha(1.0),m_eps(tree.getResolution()/10.0),m_max_tree_depth(max_depth),m_lambda1(0.99),m_lambda2(0.01) {
+	m_M=100*pow(8,max_depth);
+	m_epsilon=pow(0.5,1+3*m_max_tree_depth);
+}
 
 bool MSP3D::init(octomap::point3d start,octomap::point3d end){
 	if(m_tree.coordToKeyChecked(start, m_max_tree_depth ,m_start) && m_tree.coordToKeyChecked(end, m_max_tree_depth ,m_end)){
@@ -22,25 +26,30 @@ bool MSP3D::init(octomap::point3d start,octomap::point3d end){
 bool MSP3D::step(){
 	std::cout << "Calculate Graph" << std::endl;
 	reducedGraph();
-	std::set<kshortestpaths::BaseVertex*>  res;
-	std::map<int,int> neighboor_counts;
-	for(int i=0;i<m_nodes.size();++i){
-		res.clear();
-		//std::cout << std::endl << "vertex " << i << " ID " << m_graph.get_vertex(i)->getID() <<std::endl;
-		m_graph.get_adjacent_vertices(m_graph.get_vertex(i), res);
-		if(neighboor_counts.count(res.size())==0){
-			neighboor_counts[res.size()]=1;
-		}else{
-			neighboor_counts[res.size()]=neighboor_counts[res.size()]+1;
-		}
-//		for(std::set<kshortestpaths::BaseVertex*>::iterator it=res.begin(),end=res.end();it!=end;++it){
-//			//kshortestpaths::BaseVertex* k=*it;
-//			std::cout << "neighboor with " << (*it)->getID() <<std::endl;
-//			res.clear();
+//	std::set<kshortestpaths::BaseVertex*>  res;
+//	std::map<int,int> neighboor_counts;
+//	for(int i=0;i<m_nodes.size();++i){
+//		res.clear();
+//		m_graph.get_adjacent_vertices(m_graph.get_vertex(i), res);
+//		if(neighboor_counts.count(res.size())==0){
+//			neighboor_counts[res.size()]=1;
+//		}else{
+//			neighboor_counts[res.size()]=neighboor_counts[res.size()]+1;
 //		}
-	}
-	for (std::map<int,int>::iterator it=neighboor_counts.begin(); it!=neighboor_counts.end(); ++it)
-	    std::cout << it->first << " => " << it->second << '\n';
+//
+//		//check graph
+////		std::cout << std::endl << "vertex " << i << " ID " << m_graph.get_vertex(i)->getID() <<std::endl;
+////		for(std::set<kshortestpaths::BaseVertex*>::iterator it=res.begin(),end=res.end();it!=end;++it){
+////			//kshortestpaths::BaseVertex* k=*it;
+////			std::cout << "neighboor with " << (*it)->getID() <<std::endl;
+////			res.clear();
+////		}
+//	}
+//	std::cout << std::endl << "neighboor count check" << std::endl;
+//	std::cout << "nb neighboors => nb_nodes" << std::endl;
+//	for (std::map<int,int>::iterator it=neighboor_counts.begin(); it!=neighboor_counts.end(); ++it){
+//	    std::cout << it->first << " => " << it->second << std::endl;
+//	}
 	// shortest path
 	kshortestpaths::YenTopKShortestPathsAlg yenAlg(m_graph, m_graph.get_vertex(m_start_index),m_graph.get_vertex(m_end_index));
 	bool got_next=false;
@@ -68,8 +77,12 @@ bool MSP3D::step(){
 		std::cout << "shortest path found" << std::endl;
 		//go forward // if goal return false;
 		kshortestpaths::BasePath* result =yenAlg.next();
-		visu(std::string("iteration1.ot"),result);
+		//visu(std::string("iteration1.ot"),result);
 		std::cout << "Cost: " << result->Weight() << " Length: " << result->length() << std::endl;
+		if(result->Weight()>=m_M){
+			//no path without obstacles from current to finish
+			return false;
+		}
 		for(int i=0;i<result->length();++i)
 		{
 			std::cout << m_nodes[result->GetVertex(i)->getID()].first;
@@ -80,6 +93,10 @@ bool MSP3D::step(){
 		//do stuff to prepare next iteration
 		m_visited[m_current_coord]=	m_visited[m_current_coord]+1;
 		m_current_path.push_back(m_nodes[next_point_id].first);
+		if(getPathCost()>=m_M){
+			//no path without obstacles from start to current
+			return false;
+		}
 		//m_current_point;
 		m_current_coord=m_nodes[next_point_id].first;
 
@@ -116,6 +133,14 @@ bool MSP3D::run(){
 
 std::deque<octomap::point3d> MSP3D::getPath(){return m_current_path;}
 
+double MSP3D::getPathCost(){
+	double cost=0;
+	for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
+		cost += low_cost(*it);
+	}
+	return cost;
+}
+
 void MSP3D::reducedGraph(){
 	m_graph.clear();
 	m_nodes.clear();
@@ -139,13 +164,14 @@ void MSP3D::reducedGraph(){
 		}
 	}
 	int l=m_nodes.size();
+
 	std::cout<< "number of nodes: " << l << std::endl;
 	for(int i=0;i<l;++i){
 		// !!!!!!!!!!!!!  if not in path?
-	//	std::cout<< "node " << i << ":" << m_nodes[i].first <<std::endl;
+//		std::cout<< "node " << i << ":" << m_nodes[i].first <<std::endl;
 		m_graph.add_vertex(i);
 		if(is_start(m_nodes[i])){
-			std::cout<<"start: "<< m_nodes[i].first <<std::endl;
+//			std::cout<<"start: "<< m_nodes[i].first <<std::endl;
 			if(m_start_index!=-1){
 				std::cout << "2 start nodes, fail" << std::endl;
 				exit(1);
@@ -153,7 +179,7 @@ void MSP3D::reducedGraph(){
 			m_start_index=i;
 		}
 		if(is_goal(m_nodes[i])){
-			std::cout<<"end: "<< m_nodes[i].first <<std::endl;
+//			std::cout<<"end: "<< m_nodes[i].first <<std::endl;
 			if(m_end_index!=-1){
 				std::cout << "2 end nodes, fail" << std::endl;
 				exit(1);
@@ -170,8 +196,8 @@ void MSP3D::reducedGraph(){
 	for(int i=0;i<l;++i){
 		for(int j=i+1;j<l;++j){
 				if(neighboor(m_nodes[i],m_nodes[j])){
-			//		std::cout<< "neighboor:" << i << "," << j <<std::endl;
-			//		std::cout<< "cost:" << cost(i,j) <<std::endl;
+//					std::cout<< "neighboor:" << i << "," << j <<std::endl;
+//					std::cout<< "cost:" << cost(i,j) <<std::endl;
 					m_graph.add_edge(i,j,cost(i,j));
 					m_graph.add_edge(j,i,cost(j,i));
 				}
@@ -208,11 +234,29 @@ bool MSP3D::is_in(octomap::point3d pt,std::pair<octomap::point3d,double> &node){
 }
 
 double MSP3D::cost(int i, int j){
-	//if cost(j) <= 1-epsilon
-	// (lambda1 * cost(j) + lambda2)*Volume(j)
-	//else
-	// M
-	return m_nodes[j].second*m_nodes[j].second*m_nodes[j].second*m_tree.search(m_nodes[j].first)->getOccupancy();
+	double F=m_tree.search(m_nodes[j].first)->getOccupancy();
+//	std::cout<< "F: " << F << std::endl;
+	if (F <= 1-m_epsilon){
+//		std::cout << "normal cost: " << (m_lambda1*F+m_lambda2)*(1-pow(8,m_nodes[j].second/(m_tree.getResolution()*pow(2,16-m_max_tree_depth))))/(1-8) << std::endl;
+//		std::cout << "node size: " << m_nodes[j].second << std::endl;
+//		std::cout << "tree resolution: " <<  m_tree.getResolution()*pow(2,16-m_max_tree_depth) << std::endl;
+		//return (m_lambda1*F+m_lambda2)*(1-pow(8,m_nodes[j].second/(m_tree.getResolution()*pow(2,16-m_max_tree_depth))))/(1-8);
+		//return (m_lambda1*F+m_lambda2)*pow(8,m_nodes[j].second/(m_tree.getResolution()*pow(2,16-m_max_tree_depth))-1);
+		//return (m_lambda1*F+m_lambda2)*8*pow(m_nodes[j].second/(m_tree.getResolution()*pow(2,16-m_max_tree_depth))-1,3);
+		return (m_lambda1*F+m_lambda2)*pow(0.5*m_nodes[j].second/(m_tree.getResolution()*pow(2,16-m_max_tree_depth)),3);
+	}else{
+//		std::cout << "obstacle cost: " << m_M << std::endl;
+		return m_M;
+	}
+}
+
+double MSP3D::low_cost(octomap::point3d pt){
+	double F=m_tree.search(pt)->getOccupancy();
+	if (F <= 1-m_epsilon){
+		return m_lambda1*F+m_lambda2;
+	}else{
+		return m_M;
+	}
 }
 
 bool MSP3D::neighboor(std::pair<octomap::point3d,double> &na,std::pair<octomap::point3d,double> &nb){

@@ -144,6 +144,7 @@ void Graph::add_vertex(int node_id){
 }
 
 void Graph::add_edge(int start_vertex, int end_vertex, double edge_weight){
+//	std::cout<< "add edge: "<< start_vertex << "," << end_vertex << "," << edge_weight << std::endl;
 	///3.2.1 construct the vertices
 	BaseVertex* start_vertex_pt = get_vertex(start_vertex);
 	BaseVertex* end_vertex_pt = get_vertex(end_vertex);
