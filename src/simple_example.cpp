@@ -50,34 +50,53 @@ void print_query_info(point3d query, OcTreeNode* node) {
 void test(){
 	ColorOcTree tree (0.1);  // create empty tree with resolution 0.1
 
+	octomap::ColorOcTreeNode* n;
 
 	  // insert some measurements of occupied cells
-
+//
 	  for (int x=-20; x<20; x++) {
 	    for (int y=-20; y<20; y++) {
 	      for (int z=-20; z<20; z++) {
 	        point3d endpoint ((float) x*0.05f, (float) y*0.05f, (float) z*0.05f);
-	        tree.updateNode(endpoint, true); // integrate 'occupied' measurement
+	        n=tree.updateNode(endpoint, true); // integrate 'occupied' measurement
+	        n->setValue(1);
+	        n->setColor(255,0,0);
 	      }
 	    }
 	  }
 
 	  // insert some measurements of free cells
-
-	  for (int x=-30; x<30; x++) {
-	    for (int y=-30; y<30; y++) {
-	      for (int z=-30; z<30; z++) {
-	        point3d endpoint ((float) x*0.02f-1.0f, (float) y*0.02f-1.0f, (float) z*0.02f-1.0f);
-	        tree.updateNode(endpoint, false);  // integrate 'free' measurement
-	      }
-	    }
+//
+//	  for (int x=-30; x<30; x++) {
+//	    for (int y=-30; y<30; y++) {
+//	      for (int z=-30; z<30; z++) {
+//	        point3d endpoint ((float) x*0.02f-1.0f, (float) y*0.02f-1.0f, (float) z*0.02f-1.0f);
+//	        n=tree.updateNode(endpoint, false);  // integrate 'free' measurement
+//	        n->setColor(0,255,0);
+//	      }
+//	    }
+//	  }
+	  for(int i=0;i<8;++i){
+		  tree.getRoot()->deleteChild(i);
 	  }
-	  tree.getRoot()->getChild(0)->setLogOdds(10000000000.0);
-	  tree.getRoot()->getChild(0)->setColor(ColorOcTreeNode::Color(255,0,0));
+
+	  tree.getRoot()->setValue(1.0);
+	  tree.getRoot()->setLogOdds(3.0);
+	  tree.getRoot()->setColor(ColorOcTreeNode::Color(0,255,0));
+
+
+		tree.updateInnerOccupancy();
+
+	  for(octomap::ColorOcTree::tree_iterator it = tree.begin_tree(),	end=tree.end_tree(); it!= end; ++it)
+	  	{
+	  		std::cout << "node" << std::endl;
+	  		std::cout << it.getCoordinate() << std::endl;
+	  		std::cout << it->getColor() << std::endl;
+	  	}
 
 
 	  cout << endl;
-	  tree.writeBinary("simple_color_tree.bt");
+	  tree.writeBinary("simple_color_tree.ot");
 }
 
 int main(int argc, char** argv) {

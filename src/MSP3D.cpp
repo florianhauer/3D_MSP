@@ -4,9 +4,11 @@
 #include <octomap/ColorOcTree.h>
 #include <cmath>
 
+#include <sstream>
+
 
 namespace msp{
-MSP3D::MSP3D(octomap::OcTree &tree, int max_depth):m_tree(tree),m_path_found(false),m_alpha(1.0),m_eps(tree.getResolution()/10.0),m_max_tree_depth(max_depth),m_lambda1(0.99),m_lambda2(0.01) {
+MSP3D::MSP3D(octomap::OcTree &tree, int max_depth):m_tree(tree),m_path_found(false),m_alpha(2.0),m_eps(tree.getResolution()/10.0),m_max_tree_depth(max_depth),m_lambda1(0.999),m_lambda2(0.001) {
 	m_M=100*pow(8,max_depth);
 	m_epsilon=pow(0.5,1+3*m_max_tree_depth);
 }
@@ -18,6 +20,7 @@ bool MSP3D::init(octomap::point3d start,octomap::point3d end){
 		m_start_coord=m_tree.keyToCoord(m_start);
 		m_end_coord=m_tree.keyToCoord(m_end);
 		m_current_path.push_back(m_start_coord);
+		m_nb_step=0;
 		return true;
 	}
 	return false;
@@ -77,7 +80,9 @@ bool MSP3D::step(){
 		std::cout << "shortest path found" << std::endl;
 		//go forward // if goal return false;
 		kshortestpaths::BasePath* result =yenAlg.next();
-		//visu(std::string("iteration1.ot"),result);
+		std::stringstream it_name;
+		it_name << "iteration" << m_nb_step << ".ot";
+		visu(std::string(it_name.str()),result);
 		std::cout << "Cost: " << result->Weight() << " Length: " << result->length() << std::endl;
 		if(result->Weight()>=m_M){
 			//no path without obstacles from current to finish
@@ -92,7 +97,21 @@ bool MSP3D::step(){
 		int next_point_id=result->GetVertex(1)->getID();
 		//do stuff to prepare next iteration
 		m_visited[m_current_coord]=	m_visited[m_current_coord]+1;
+
+//		std::cout<<"before adding element"<< std::endl;
+//		for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
+//			std::cout<< (*it) << std::endl;
+//		}
+
 		m_current_path.push_back(m_nodes[next_point_id].first);
+
+//		std::cout<<"after adding element"<< std::endl;
+//		for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
+//			std::cout<< (*it) << std::endl;
+//		}
+
+
+
 		if(getPathCost()>=m_M){
 			//no path without obstacles from start to current
 			return false;
@@ -123,7 +142,7 @@ bool MSP3D::step(){
 }
 
 bool MSP3D::run(){
-	while(step()){}
+	while(step()){++m_nb_step;}
 	if(m_path_found){
 		return true;
 	}else{
@@ -135,10 +154,34 @@ std::deque<octomap::point3d> MSP3D::getPath(){return m_current_path;}
 
 double MSP3D::getPathCost(){
 	double cost=0;
-	for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
+	std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();
+	++it;
+	for(0;it!=end;++it){
 		cost += low_cost(*it);
+		std::cout << low_cost(*it) << " -> ";
 	}
+	std::cout<<std::endl;
 	return cost;
+}
+
+bool MSP3D::inPath(octomap::point3d pt){
+//	std::cout << "in path intro" << std::endl;
+//	for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
+//				std::cout<< (*it) << std::endl;
+//			}
+
+
+	//TODO : change it to if it includes an element of the path, i e, if is_in(*it, pt, pt_size)
+
+	for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
+
+//		std::cout << "in path test " <<pt << (*it) << std::endl;
+		if(pt==(*it) && !((*it)==m_current_path.back())){
+//			std::cout << "in path " << std::endl;
+			return true;
+		}
+	}
+	return false;
 }
 
 void MSP3D::reducedGraph(){
@@ -157,7 +200,9 @@ void MSP3D::reducedGraph(){
 		}
 		if(!skip){
 			if((it.getCoordinate()-m_current_coord).norm()>m_alpha*it.getSize()  || it.isLeaf()){
-				m_nodes.push_back(std::pair<octomap::point3d,double>(it.getCoordinate(),it.getSize()));
+				if(!inPath(it.getCoordinate())){
+					m_nodes.push_back(std::pair<octomap::point3d,double>(it.getCoordinate(),it.getSize()));
+				}
 				skip=true;
 				depth=it.getDepth();
 			}
@@ -205,16 +250,141 @@ void MSP3D::reducedGraph(){
 	}
 }
 
+void MSP3D::setObstacles(std::vector<std::pair<octomap::point3d,double> > obstacles){
+	m_obstacles=obstacles;
+}
+
+octomap::OcTreeNode* MSP3D::findNode(octomap::point3d pt){
+	for(octomap::OcTree::tree_iterator it = m_tree.begin_tree(),	end=m_tree.end_tree(); it!= end; ++it)
+		{
+			if(it.getCoordinate()==pt){
+				return &(*it);
+			}
+		}
+}
+
 void MSP3D::visu(std::string filename, kshortestpaths::BasePath* path){
 	octomap::ColorOcTree tree(0.1);  // create empty tree with resolution 0.1
-	octomap::ColorOcTreeNode* n;
-	for(int i=0;i<m_nodes.size();++i){
-		n = tree.updateNode(m_nodes[i].first, true);
-		n->setColor(0,0,200);
+
+	int mm=32;
+	for (int x=-mm; x<mm; x++) {
+		for (int y=-mm; y<mm; y++) {
+			for (int z=-mm; z<mm; z++) {
+				octomap::point3d endpoint ((float) x*100.0f, (float) y*100.0f, (float) z*100.0f);
+				tree.updateNode(endpoint, false); // integrate 'free' measurement
+			}
+		}
 	}
+
+	for(octomap::ColorOcTree::tree_iterator it = tree.begin_tree(),	end=tree.end_tree(); it!= end; ++it)
+	{
+		if(it.getDepth()>=m_max_tree_depth){
+			for(int i=0;i<8;++i){
+				if(it->childExists(i)){
+					it->deleteChild(i);
+				}
+			}
+			//octomap::point3d vec_dir(1,1,1);
+//			it->setLogOdds(octomap::logodds(1));
+			//it->setLogOdds(octomap::logodds((vec_dir.cross(it.getCoordinate())).norm()/max_size));
+		}
+	}
+	tree.updateInnerOccupancy();
+
+	octomap::ColorOcTreeNode* n;
+//	std::cout << "starting to create color tree" << std::endl;
+	for(octomap::ColorOcTree::tree_iterator it = tree.begin_tree(),	end=tree.end_tree(); it!= end; ++it)
+	{
+		for(int i=0;i<m_nodes.size();++i){
+			if(it.getCoordinate()==m_nodes[i].first){
+//				std::cout << "change occupancy of node" << findNode(it.getCoordinate())->getOccupancy() << std::endl;
+				//it->setColor(0,0,(char)floor(125+125*(findNode(it.getCoordinate())->getOccupancy())));
+				it->setColor(0,0,255);
+				it->setLogOdds(findNode(it.getCoordinate())->getLogOdds());
+//				std::cout << "delete childrem" << std::endl;
+				for(int i=0;i<8;++i){
+					if(it->childExists(i)){
+						it->deleteChild(i);
+					}
+				}
+//				std::cout << "delete children done" << std::endl;
+			}
+		}
+	}
+
+	tree.updateInnerOccupancy();
+//	for(int i=0;i<m_nodes.size();++i){
+////		n = tree.updateNode(m_nodes[i].first, true);
+////		n->setColor(0,0,200);
+//		std::cout << "change color/get node" << std::endl;
+//		//n=tree.setNodeColor(m_nodes[i].first.x(),m_nodes[i].first.y(),m_nodes[i].first.z(),0,0,(char)floor(255*(1-n->getOccupancy())));
+//		n=tree.setNodeColor(m_nodes[i].first.x(),m_nodes[i].first.y(),m_nodes[i].first.z(),0,0,255);
+//		if(n==NULL){
+//			std::cout<< "NULL" << std::endl;
+//		}
+//		std::cout << "change occupancy of node" << n->getOccupancy() << std::endl;
+//		n->setValue(1);
+//		n->setColor(0,0,255);
+//		std::cout << "delete childrem" << std::endl;
+//		for(int i=0;i<8;++i){
+//			if(n->childExists(i)){
+//				n->deleteChild(i);
+//			}
+//		}
+//		std::cout << "delete children done" << std::endl;
+//	}
+//	std::cout << "end of create color tree" << std::endl;
 	//tree.prune();
-	tree.writeBinary(filename);
-	exit(0);
+
+    std::ofstream binary_outfile( filename.c_str(), std::ios_base::binary);
+
+    if (!binary_outfile.is_open()){
+      std::cout<<"Filestream to "<< filename << " not open, nothing written."<<std::endl;
+      exit(1);
+    }
+
+	tree.writeBinary(binary_outfile);
+
+
+	//previous path
+	binary_outfile /*<< std::endl << "ppath" */<< m_current_path.size();
+//	std::cout << std::endl << "ppath" << m_current_path.size();
+	for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
+		it->writeBinary(binary_outfile);
+//		std::cout << *it <<std::endl;
+	}
+
+	//future path
+	binary_outfile /*<< std::endl << "fpath"*/ << path->length();
+//	std::cout << std::endl << "fpath" << m_current_path.size();
+	for(int i=0;i<path->length();++i){
+		m_nodes[path->GetVertex(i)->getID()].first.writeBinary(binary_outfile);
+		binary_outfile << m_nodes[path->GetVertex(i)->getID()].second;
+//		std::cout << m_nodes[path->GetVertex(i)->getID()].first <<std::endl;
+	}
+
+	//start
+	//binary_outfile << std::endl << "start";
+	m_start_coord.writeBinary(binary_outfile);
+//	std::cout << "start " << m_start_coord <<std::endl;
+	//end
+	//binary_outfile << std::endl << "end";
+	m_end_coord.writeBinary(binary_outfile);
+//	std::cout << "end " << m_end_coord <<std::endl;
+
+	//obstacles
+	binary_outfile /*<< std::endl << "fpath"*/ << m_obstacles.size();
+//	std::cout << std::endl << "fpath" << m_current_path.size();
+	for(int i=0;i<m_obstacles.size();++i){
+		m_obstacles[i].first.writeBinary(binary_outfile);
+		binary_outfile << m_obstacles[i].second;
+//		std::cout << m_nodes[path->GetVertex(i)->getID()].first <<std::endl;
+	}
+
+
+	binary_outfile.close();
+
+	//exit(0);
 }
 
 bool MSP3D::is_start(std::pair<octomap::point3d,double> &node){
@@ -234,7 +404,7 @@ bool MSP3D::is_in(octomap::point3d pt,std::pair<octomap::point3d,double> &node){
 }
 
 double MSP3D::cost(int i, int j){
-	double F=m_tree.search(m_nodes[j].first)->getOccupancy();
+	double F=findNode(m_nodes[j].first)->getOccupancy();
 //	std::cout<< "F: " << F << std::endl;
 	if (F <= 1-m_epsilon){
 //		std::cout << "normal cost: " << (m_lambda1*F+m_lambda2)*(1-pow(8,m_nodes[j].second/(m_tree.getResolution()*pow(2,16-m_max_tree_depth))))/(1-8) << std::endl;
@@ -243,7 +413,8 @@ double MSP3D::cost(int i, int j){
 		//return (m_lambda1*F+m_lambda2)*(1-pow(8,m_nodes[j].second/(m_tree.getResolution()*pow(2,16-m_max_tree_depth))))/(1-8);
 		//return (m_lambda1*F+m_lambda2)*pow(8,m_nodes[j].second/(m_tree.getResolution()*pow(2,16-m_max_tree_depth))-1);
 		//return (m_lambda1*F+m_lambda2)*8*pow(m_nodes[j].second/(m_tree.getResolution()*pow(2,16-m_max_tree_depth))-1,3);
-		return (m_lambda1*F+m_lambda2)*pow(0.5*m_nodes[j].second/(m_tree.getResolution()*pow(2,16-m_max_tree_depth)),3);
+		//return (m_lambda1*F+m_lambda2)*pow(m_nodes[j].second/(m_tree.getResolution()*pow(2,16-m_max_tree_depth)),3);
+		return (m_lambda1*F+m_lambda2)*pow(m_nodes[j].second/m_tree.getNodeSize(m_max_tree_depth),3);
 	}else{
 //		std::cout << "obstacle cost: " << m_M << std::endl;
 		return m_M;
@@ -251,7 +422,8 @@ double MSP3D::cost(int i, int j){
 }
 
 double MSP3D::low_cost(octomap::point3d pt){
-	double F=m_tree.search(pt)->getOccupancy();
+	double F=findNode(pt)->getOccupancy();
+	//std::cout << pt << F << std::endl;
 	if (F <= 1-m_epsilon){
 		return m_lambda1*F+m_lambda2;
 	}else{

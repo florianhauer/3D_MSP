@@ -36,7 +36,10 @@ namespace msp{
 			bool run();
 			std::deque<octomap::point3d> getPath();
 			double getPathCost();
+			void setObstacles(std::vector<std::pair<octomap::point3d,double> > obstacles);
 		protected:
+			bool inPath(octomap::point3d pt);
+			octomap::OcTreeNode* findNode(octomap::point3d pt);
 			double low_cost(octomap::point3d pt);
 			void reducedGraph();
 			void iterativeReducedGraph(octomap::OcTree::NodeType *n);
@@ -61,11 +64,13 @@ namespace msp{
 			std::map<octomap::point3d,double,Point3D_Less> m_visited;
 			double m_alpha;//used in reduced graph as parameter for decomposition
 			std::vector<std::pair<octomap::point3d,double> > m_nodes; //coord,size
+			std::vector<std::pair<octomap::point3d,double> > m_obstacles; //for debugging and display only
 			double m_eps;//used as margin for comparison (small compared to tree resolution)
 			double m_epsilon;
 			double m_M;
 			double m_lambda1;
 			double m_lambda2;
 			int m_max_tree_depth;
+			int m_nb_step;
 	};
 }
