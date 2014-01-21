@@ -38,7 +38,7 @@ namespace msp{
 			double getPathCost();
 			void setObstacles(std::vector<std::pair<octomap::point3d,double> > obstacles);
 		protected:
-			bool inPath(octomap::point3d pt);
+			bool inPath(octomap::point3d pt,double size);
 			octomap::OcTreeNode* findNode(octomap::point3d pt);
 			double low_cost(octomap::point3d pt);
 			void reducedGraph();
@@ -46,7 +46,7 @@ namespace msp{
 			bool neighboor(std::pair<octomap::point3d,double> &na,std::pair<octomap::point3d,double> &nb);
 			bool is_start(std::pair<octomap::point3d,double> &node);
 			bool is_goal(std::pair<octomap::point3d,double> &node);
-			bool is_in(octomap::point3d pt,std::pair<octomap::point3d,double> &node);
+			bool is_in(octomap::point3d pt,std::pair<octomap::point3d,double> node);
 			double cost(int i, int j);
 			void visu(std::string filename, kshortestpaths::BasePath* path);
 			octomap::OcTreeKey m_start;

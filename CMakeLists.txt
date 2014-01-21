@@ -8,7 +8,7 @@ SET( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BASE_DIR}/lib )
 SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BASE_DIR}/bin )
 
 include_directories("./3rdparty/kshortestpaths/")
-include_directories("/home/florian/workspace/octomap-1.6.1/octomap/include/octomap/")
+include_directories("./3rdparty/octomap-1.6.2-flo/octomap/include/octomap/")
 # "/home/florian/workspace/octomap-1.6.1/octomap/include/octomap/"
 
 ADD_SUBDIRECTORY( 3rdparty )

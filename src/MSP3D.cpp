@@ -75,58 +75,64 @@ bool MSP3D::step(){
 		}
 	}
 	std::cout << "End of step update" << std::endl;
+
+	//TODO: check if the path contains obstacles (cost > M) if yes change get next to false
+
 	//if solution
 	if(got_next){
-		std::cout << "shortest path found" << std::endl;
 		//go forward // if goal return false;
 		kshortestpaths::BasePath* result =yenAlg.next();
+		std::cout << "Cost: " << result->Weight() << " Length: " << result->length() << std::endl;
 		std::stringstream it_name;
 		it_name << "iteration" << m_nb_step << ".ot";
 		visu(std::string(it_name.str()),result);
-		std::cout << "Cost: " << result->Weight() << " Length: " << result->length() << std::endl;
 		if(result->Weight()>=m_M){
 			//no path without obstacles from current to finish
-			return false;
-		}
-		for(int i=0;i<result->length();++i)
-		{
-			std::cout << m_nodes[result->GetVertex(i)->getID()].first;
-			std::cout << "->";
-		}
-		std::cout << std::endl <<  "*********************************************" << std::endl;
-		int next_point_id=result->GetVertex(1)->getID();
-		//do stuff to prepare next iteration
-		m_visited[m_current_coord]=	m_visited[m_current_coord]+1;
-
-//		std::cout<<"before adding element"<< std::endl;
-//		for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
-//			std::cout<< (*it) << std::endl;
-//		}
-
-		m_current_path.push_back(m_nodes[next_point_id].first);
-
-//		std::cout<<"after adding element"<< std::endl;
-//		for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
-//			std::cout<< (*it) << std::endl;
-//		}
-
-
-
-		if(getPathCost()>=m_M){
-			//no path without obstacles from start to current
-			return false;
-		}
-		//m_current_point;
-		m_current_coord=m_nodes[next_point_id].first;
-
-		if(next_point_id==m_end_index){
-			std::cout << "goal reached" << std::endl;
-			m_path_found=true;
-			return false;
+			std::cout << "shortest path with obstacles" << std::endl;
+			got_next=false;
 		}else{
-			return true;
+			std::cout << "shortest path found" << std::endl;
+			for(int i=0;i<result->length();++i)
+			{
+				std::cout << m_nodes[result->GetVertex(i)->getID()].first;
+				std::cout << "->";
+			}
+			std::cout << std::endl <<  "*********************************************" << std::endl;
+			int next_point_id=result->GetVertex(1)->getID();
+			//do stuff to prepare next iteration
+			m_visited[m_current_coord]=	m_visited[m_current_coord]+1;
+
+	//		std::cout<<"before adding element"<< std::endl;
+	//		for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
+	//			std::cout<< (*it) << std::endl;
+	//		}
+
+			m_current_path.push_back(m_nodes[next_point_id].first);
+
+	//		std::cout<<"after adding element"<< std::endl;
+	//		for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
+	//			std::cout<< (*it) << std::endl;
+	//		}
+
+
+
+			if(getPathCost()>=m_M){
+				//no path without obstacles from start to current
+				return false;
+			}
+			//m_current_point;
+			m_current_coord=m_nodes[next_point_id].first;
+
+			if(next_point_id==m_end_index){
+				std::cout << "goal reached" << std::endl;
+				m_path_found=true;
+				return false;
+			}else{
+				return true;
+			}
 		}
-	}else{
+	}
+	if(!got_next){
 		std::cout << "shortest path not found" << std::endl;
 		//go back // if path empty => no solution return false
 		m_visited[m_current_coord]=0;
@@ -164,7 +170,7 @@ double MSP3D::getPathCost(){
 	return cost;
 }
 
-bool MSP3D::inPath(octomap::point3d pt){
+bool MSP3D::inPath(octomap::point3d pt,double size){
 //	std::cout << "in path intro" << std::endl;
 //	for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
 //				std::cout<< (*it) << std::endl;
@@ -176,7 +182,8 @@ bool MSP3D::inPath(octomap::point3d pt){
 	for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
 
 //		std::cout << "in path test " <<pt << (*it) << std::endl;
-		if(pt==(*it) && !((*it)==m_current_path.back())){
+		//if(pt==(*it) && !((*it)==m_current_path.back())){
+		if(is_in(*it,std::pair<octomap::point3d,double>(pt,size)) && !((*it)==m_current_path.back())){
 //			std::cout << "in path " << std::endl;
 			return true;
 		}
@@ -200,7 +207,7 @@ void MSP3D::reducedGraph(){
 		}
 		if(!skip){
 			if((it.getCoordinate()-m_current_coord).norm()>m_alpha*it.getSize()  || it.isLeaf()){
-				if(!inPath(it.getCoordinate())){
+				if(!inPath(it.getCoordinate(),it.getSize())){
 					m_nodes.push_back(std::pair<octomap::point3d,double>(it.getCoordinate(),it.getSize()));
 				}
 				skip=true;
@@ -285,7 +292,7 @@ void MSP3D::visu(std::string filename, kshortestpaths::BasePath* path){
 				}
 			}
 			//octomap::point3d vec_dir(1,1,1);
-//			it->setLogOdds(octomap::logodds(1));
+			it->setLogOdds(octomap::logodds(0));
 			//it->setLogOdds(octomap::logodds((vec_dir.cross(it.getCoordinate())).norm()/max_size));
 		}
 	}
@@ -300,7 +307,8 @@ void MSP3D::visu(std::string filename, kshortestpaths::BasePath* path){
 //				std::cout << "change occupancy of node" << findNode(it.getCoordinate())->getOccupancy() << std::endl;
 				//it->setColor(0,0,(char)floor(125+125*(findNode(it.getCoordinate())->getOccupancy())));
 				it->setColor(0,0,255);
-				it->setLogOdds(findNode(it.getCoordinate())->getLogOdds());
+				//it->setLogOdds(findNode(it.getCoordinate())->getLogOdds());
+				it->setLogOdds(octomap::logodds(1));
 //				std::cout << "delete childrem" << std::endl;
 				for(int i=0;i<8;++i){
 					if(it->childExists(i)){
@@ -395,7 +403,7 @@ bool MSP3D::is_goal(std::pair<octomap::point3d,double> &node){
 	return is_in(m_end_coord,node);
 }
 
-bool MSP3D::is_in(octomap::point3d pt,std::pair<octomap::point3d,double> &node){
+bool MSP3D::is_in(octomap::point3d pt,std::pair<octomap::point3d,double> node){
 	double l=0.5*node.second;
 	if(fabs(pt.x()-node.first.x())<l && fabs(pt.y()-node.first.y())<l && fabs(pt.z()-node.first.z())<l){
 		return true;

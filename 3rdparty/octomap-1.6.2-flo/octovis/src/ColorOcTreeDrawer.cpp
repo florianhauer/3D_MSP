@@ -294,7 +294,7 @@ namespace octomap {
         else 
           voxel = OcTreeVolume(it.getCoordinate(), it.getSize());
         
-        if (tree.isNodeOccupied(*it)){ // occupied voxels
+        if (it->getLogOdds()>0){ // occupied voxels
           if (tree.isNodeAtThreshold(*it)) {
               idx_occupied_thres = generateCube(voxel, cube_template, idx_occupied_thres, &m_occupiedThresArray);
               color_idx_occupied_thres =  setCubeColorRGBA(it->getColor().r, it->getColor().g, it->getColor().b,
@@ -305,12 +305,14 @@ namespace octomap {
 //              color_idx_occupied_thres =  setCubeColorRGBA(255, 255, 255,
 //                                                           (unsigned char) ( 100.),
 //                                                           color_idx_occupied_thres, &m_occupiedThresColorArray);
-            }
+
+              m_grid_voxels.push_back(voxel);
+          }
           else {
-              idx_occupied = generateCube(voxel, cube_template, idx_occupied, &m_occupiedArray);
-              color_idx_occupied = setCubeColorRGBA(it->getColor().r, it->getColor().g, it->getColor().b,
-                                                    (unsigned char)(0.+it->getOccupancy() * 100.),
-                                                    color_idx_occupied, &m_occupiedColorArray);
+//              idx_occupied = generateCube(voxel, cube_template, idx_occupied, &m_occupiedArray);
+//              color_idx_occupied = setCubeColorRGBA(it->getColor().r, it->getColor().g, it->getColor().b,
+//                                                    (unsigned char)(0.+it->getOccupancy() * 100.),
+//                                                    color_idx_occupied, &m_occupiedColorArray);
 
 //              idx_occupied = generateCube(voxel, cube_template, idx_occupied, &m_occupiedArray);
 //              color_idx_occupied = setCubeColorRGBA(255,255,255,
@@ -318,27 +320,27 @@ namespace octomap {
 //                                                    color_idx_occupied, &m_occupiedColorArray);
             }
         }
-        else if (showAll) { // freespace voxels
-          if (tree.isNodeAtThreshold(*it)) {
-            idx_free_thres = generateCube(voxel, cube_template, idx_free_thres, &m_freeThresArray);
-          }
-          else {
-            idx_free = generateCube(voxel, cube_template, idx_free, &m_freeArray);
-          }
-        }
+//        else if (showAll) { // freespace voxels
+//          if (tree.isNodeAtThreshold(*it)) {
+//            idx_free_thres = generateCube(voxel, cube_template, idx_free_thres, &m_freeThresArray);
+//          }
+//          else {
+//            idx_free = generateCube(voxel, cube_template, idx_free, &m_freeArray);
+//          }
+//        }
 
         // grid structure voxel
-        if (showAll) m_grid_voxels.push_back(voxel);        
+//        if (showAll) m_grid_voxels.push_back(voxel);
       }
       
       else { // inner node voxels (for grid structure only)
-        if (showAll) {
-          if (uses_origin)
-            voxel = OcTreeVolume(origin.rot().rotate(it.getCoordinate()), it.getSize());
-          else
-            voxel = OcTreeVolume(it.getCoordinate(), it.getSize());
-          m_grid_voxels.push_back(voxel);
-        }
+//        if (showAll) {
+//          if (uses_origin)
+//            voxel = OcTreeVolume(origin.rot().rotate(it.getCoordinate()), it.getSize());
+//          else
+//            voxel = OcTreeVolume(it.getCoordinate(), it.getSize());
+//          m_grid_voxels.push_back(voxel);
+//        }
       }      
     } // end for all voxels
 
