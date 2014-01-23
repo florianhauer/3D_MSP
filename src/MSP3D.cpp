@@ -21,6 +21,10 @@ bool MSP3D::init(octomap::point3d start,octomap::point3d end){
 		m_end_coord=m_tree.keyToCoord(m_end);
 		m_current_path.push_back(m_start_coord);
 		m_nb_step=0;
+		std::stringstream it_name;
+		it_name << "iteration" << m_nb_step << ".ot";
+		visu_init(std::string(it_name.str()));
+		m_nb_step++;
 		return true;
 	}
 	return false;
@@ -370,6 +374,113 @@ void MSP3D::visu(std::string filename, kshortestpaths::BasePath* path){
 		binary_outfile << m_nodes[path->GetVertex(i)->getID()].second;
 //		std::cout << m_nodes[path->GetVertex(i)->getID()].first <<std::endl;
 	}
+
+	//start
+	//binary_outfile << std::endl << "start";
+	m_start_coord.writeBinary(binary_outfile);
+//	std::cout << "start " << m_start_coord <<std::endl;
+	//end
+	//binary_outfile << std::endl << "end";
+	m_end_coord.writeBinary(binary_outfile);
+//	std::cout << "end " << m_end_coord <<std::endl;
+
+	//obstacles
+	binary_outfile /*<< std::endl << "fpath"*/ << m_obstacles.size();
+//	std::cout << std::endl << "fpath" << m_current_path.size();
+	for(int i=0;i<m_obstacles.size();++i){
+		m_obstacles[i].first.writeBinary(binary_outfile);
+		binary_outfile << m_obstacles[i].second;
+//		std::cout << m_nodes[path->GetVertex(i)->getID()].first <<std::endl;
+	}
+
+
+	binary_outfile.close();
+
+	//exit(0);
+}
+
+void MSP3D::visu_init(std::string filename){
+	octomap::ColorOcTree tree(0.1);  // create empty tree with resolution 0.1
+
+	int mm=32;
+	for (int x=-mm; x<mm; x++) {
+		for (int y=-mm; y<mm; y++) {
+			for (int z=-mm; z<mm; z++) {
+				octomap::point3d endpoint ((float) x*100.0f, (float) y*100.0f, (float) z*100.0f);
+				tree.updateNode(endpoint, false); // integrate 'free' measurement
+			}
+		}
+	}
+
+	for(octomap::ColorOcTree::tree_iterator it = tree.begin_tree(),	end=tree.end_tree(); it!= end; ++it)
+	{
+		if(it.getDepth()>=m_max_tree_depth){
+			for(int i=0;i<8;++i){
+				if(it->childExists(i)){
+					it->deleteChild(i);
+				}
+			}
+			//octomap::point3d vec_dir(1,1,1);
+			it->setLogOdds(octomap::logodds(1));
+			//it->setLogOdds(octomap::logodds((vec_dir.cross(it.getCoordinate())).norm()/max_size));
+		}
+	}
+	tree.updateInnerOccupancy();
+
+
+//	for(int i=0;i<m_nodes.size();++i){
+////		n = tree.updateNode(m_nodes[i].first, true);
+////		n->setColor(0,0,200);
+//		std::cout << "change color/get node" << std::endl;
+//		//n=tree.setNodeColor(m_nodes[i].first.x(),m_nodes[i].first.y(),m_nodes[i].first.z(),0,0,(char)floor(255*(1-n->getOccupancy())));
+//		n=tree.setNodeColor(m_nodes[i].first.x(),m_nodes[i].first.y(),m_nodes[i].first.z(),0,0,255);
+//		if(n==NULL){
+//			std::cout<< "NULL" << std::endl;
+//		}
+//		std::cout << "change occupancy of node" << n->getOccupancy() << std::endl;
+//		n->setValue(1);
+//		n->setColor(0,0,255);
+//		std::cout << "delete childrem" << std::endl;
+//		for(int i=0;i<8;++i){
+//			if(n->childExists(i)){
+//				n->deleteChild(i);
+//			}
+//		}
+//		std::cout << "delete children done" << std::endl;
+//	}
+//	std::cout << "end of create color tree" << std::endl;
+	//tree.prune();
+
+    std::ofstream binary_outfile( filename.c_str(), std::ios_base::binary);
+
+    if (!binary_outfile.is_open()){
+      std::cout<<"Filestream to "<< filename << " not open, nothing written."<<std::endl;
+      exit(1);
+    }
+
+	tree.writeBinary(binary_outfile);
+
+	int z=1;
+	//previous path
+	binary_outfile /*<< std::endl << "ppath" */<< z;
+
+	m_start_coord.writeBinary(binary_outfile);
+//	std::cout << std::endl << "ppath" << m_current_path.size();
+//	for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
+//		it->writeBinary(binary_outfile);
+////		std::cout << *it <<std::endl;
+//	}
+
+	//future path
+	binary_outfile /*<< std::endl << "fpath"*/ << z;
+	m_start_coord.writeBinary(binary_outfile);
+	binary_outfile << m_tree.getNodeSize(m_max_tree_depth);
+//	std::cout << std::endl << "fpath" << m_current_path.size();
+//	for(int i=0;i<path->length();++i){
+//		m_nodes[path->GetVertex(i)->getID()].first.writeBinary(binary_outfile);
+//		binary_outfile << m_nodes[path->GetVertex(i)->getID()].second;
+////		std::cout << m_nodes[path->GetVertex(i)->getID()].first <<std::endl;
+//	}
 
 	//start
 	//binary_outfile << std::endl << "start";

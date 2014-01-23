@@ -49,6 +49,7 @@ namespace msp{
 			bool is_in(octomap::point3d pt,std::pair<octomap::point3d,double> node);
 			double cost(int i, int j);
 			void visu(std::string filename, kshortestpaths::BasePath* path);
+			void visu_init(std::string filename);
 			octomap::OcTreeKey m_start;
 			octomap::OcTreeKey m_end;
 			octomap::point3d m_start_coord;

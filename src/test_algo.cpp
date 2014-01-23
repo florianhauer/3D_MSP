@@ -3,6 +3,7 @@
 #include <octomap_utils.h>
 
 int main(int argc, char** argv) {
+
 	int max_depth=3;
 	//double max_size=0.1*pow(2,16)*sqrt(3);
 	octomap::OcTree tree(0.1);  // create empty tree with resolution 0.1
@@ -101,8 +102,8 @@ int main(int argc, char** argv) {
 	octomap::point3d start(-3000.0,-3000.0,-3000.0);
 	octomap::point3d end(3000.0,3000.0,3000.0);
 	std::cout << "Init algo" << std::endl;
-	algo.init(start,end);
 	algo.setObstacles(obstacles);
+	algo.init(start,end);
 	std::cout << "Run algo" << std::endl;
 	double scale=tree.getResolution()*pow(2,16-max_depth)/(1-8);
 	if(algo.run()){
