@@ -5,7 +5,7 @@
 
 int main(int argc, char** argv) {
 
-	int max_depth=4;
+	int max_depth=5;
 	//double max_size=0.1*pow(2,16)*sqrt(3);
 	octomap::OcTree tree(0.1);  // create empty tree with resolution 0.1
 	int mm=32;

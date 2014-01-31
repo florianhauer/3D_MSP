@@ -78,6 +78,7 @@ bool MSP3D::step(){
 			got_next=true;
 		}
 	}
+	//return false;
 //	std::cout << "End of step update" << std::endl;
 
 	//TODO: check if the path contains obstacles (cost > M) if yes change get next to false
@@ -114,6 +115,15 @@ bool MSP3D::step(){
 			m_current_path.push_back(m_nodes[next_point_id].first);
 			m_path_cost.push_back(m_cost[next_point_id]);
 
+			if(result->length()>2){
+				int next_point_id2=result->GetVertex(2)->getID();
+				if(m_nodes[next_point_id2].second==m_nodes[next_point_id].second){
+					m_visited[m_nodes[next_point_id].first]=	m_visited[m_nodes[next_point_id].first]+1;
+					m_current_path.push_back(m_nodes[next_point_id2].first);
+					m_path_cost.push_back(m_cost[next_point_id2]);
+					next_point_id=next_point_id2;
+				}
+			}
 	//		std::cout<<"after adding element"<< std::endl;
 	//		for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
 	//			std::cout<< (*it) << std::endl;
