@@ -3,7 +3,7 @@
 #include <set>
 #include <octomap/ColorOcTree.h>
 #include <cmath>
-
+#include <numeric>
 #include <sstream>
 
 
@@ -112,6 +112,7 @@ bool MSP3D::step(){
 	//		}
 
 			m_current_path.push_back(m_nodes[next_point_id].first);
+			m_path_cost.push_back(m_cost[next_point_id]);
 
 	//		std::cout<<"after adding element"<< std::endl;
 	//		for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
@@ -146,6 +147,7 @@ bool MSP3D::step(){
 			return false;
 		}else{
 			m_current_coord=m_current_path.back();
+			m_path_cost.pop_back();
 			return true;
 		}
 	}
@@ -163,15 +165,16 @@ bool MSP3D::run(){
 std::deque<octomap::point3d> MSP3D::getPath(){return m_current_path;}
 
 double MSP3D::getPathCost(){
-	double cost=0;
-	std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();
-	++it;
-	for(0;it!=end;++it){
-		cost += low_cost(*it);
-//		std::cout << low_cost(*it) << " -> ";
-	}
-//	std::cout<<std::endl;
-	return cost;
+	return std::accumulate(m_path_cost.begin(),m_path_cost.end(),0.0);//
+//	double cost=0;
+//	std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();
+//	++it;
+//	for(0;it!=end;++it){
+//		cost += low_cost(*it);
+////		std::cout << low_cost(*it) << " -> ";
+//	}
+////	std::cout<<std::endl;
+//	return cost;
 }
 
 bool MSP3D::inPath(octomap::point3d pt,double size){
@@ -198,6 +201,7 @@ bool MSP3D::inPath(octomap::point3d pt,double size){
 void MSP3D::reducedGraph(){
 	m_graph.clear();
 	m_nodes.clear();
+	m_cost.clear();
 	m_start_index=-1;
 	m_end_index=-1;
 	octomap::OcTree::tree_iterator it_end=m_tree.end_tree();
@@ -213,6 +217,7 @@ void MSP3D::reducedGraph(){
 			if((it.getCoordinate()-m_current_coord).norm()>m_alpha*it.getSize()  || it.isLeaf()){
 				if(!inPath(it.getCoordinate(),it.getSize())){
 					m_nodes.push_back(std::pair<octomap::point3d,double>(it.getCoordinate(),it.getSize()));
+					m_cost.push_back(cost_func(it->getOccupancy())*pow(it.getSize()/m_tree.getNodeSize(m_max_tree_depth),3));
 				}
 				skip=true;
 				depth=it.getDepth();
@@ -254,8 +259,8 @@ void MSP3D::reducedGraph(){
 				if(neighboor(m_nodes[i],m_nodes[j])){
 //					std::cout<< "neighboor:" << i << "," << j <<std::endl;
 //					std::cout<< "cost:" << cost(i,j) <<std::endl;
-					m_graph.add_edge(i,j,cost(i,j));
-					m_graph.add_edge(j,i,cost(j,i));
+					m_graph.add_edge(i,j,m_cost[j]);
+					m_graph.add_edge(j,i,m_cost[i]);
 				}
 		}
 	}
@@ -541,8 +546,12 @@ double MSP3D::cost(int i, int j){
 }
 
 double MSP3D::low_cost(octomap::point3d pt){
-	double F=findNode(pt)->getOccupancy();
+	return cost_func(findNode(pt)->getOccupancy());
 	//std::cout << pt << F << std::endl;
+
+}
+
+double MSP3D::cost_func(double F){
 	if (F <= 1-m_epsilon){
 		return m_lambda1*F+m_lambda2;
 	}else{

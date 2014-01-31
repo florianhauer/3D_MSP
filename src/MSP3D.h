@@ -48,6 +48,7 @@ namespace msp{
 			bool is_goal(std::pair<octomap::point3d,double> &node);
 			bool is_in(octomap::point3d pt,std::pair<octomap::point3d,double> node);
 			double cost(int i, int j);
+			double cost_func(double F);
 			void visu(std::string filename, kshortestpaths::BasePath* path);
 			void visu_init(std::string filename);
 			octomap::OcTreeKey m_start;
@@ -65,6 +66,8 @@ namespace msp{
 			std::map<octomap::point3d,double,Point3D_Less> m_visited;
 			double m_alpha;//used in reduced graph as parameter for decomposition
 			std::vector<std::pair<octomap::point3d,double> > m_nodes; //coord,size
+			std::vector<double> m_cost;
+			std::vector<double> m_path_cost;
 			std::vector<std::pair<octomap::point3d,double> > m_obstacles; //for debugging and display only
 			double m_eps;//used as margin for comparison (small compared to tree resolution)
 			double m_epsilon;
