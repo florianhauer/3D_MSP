@@ -97,8 +97,8 @@ namespace octomap {
 
 
       drawOctreeGrid();
-      drawPPath();
-//    drawOccupiedVoxels();
+      //drawPPath();
+    drawOccupiedVoxels();
 
 //      if (m_drawOccupied)
 //        drawOccupiedVoxels();
@@ -296,15 +296,15 @@ namespace octomap {
         
         if (it->getLogOdds()>0){ // occupied voxels
           if (tree.isNodeAtThreshold(*it)) {
-              idx_occupied_thres = generateCube(voxel, cube_template, idx_occupied_thres, &m_occupiedThresArray);
-              color_idx_occupied_thres =  setCubeColorRGBA(it->getColor().r, it->getColor().g, it->getColor().b,
-                                                           (unsigned char) (0.+it->getOccupancy() * 100.),
-                                                           color_idx_occupied_thres, &m_occupiedThresColorArray);
-
 //              idx_occupied_thres = generateCube(voxel, cube_template, idx_occupied_thres, &m_occupiedThresArray);
-//              color_idx_occupied_thres =  setCubeColorRGBA(255, 255, 255,
-//                                                           (unsigned char) ( 100.),
+//              color_idx_occupied_thres =  setCubeColorRGBA(it->getColor().r, it->getColor().g, it->getColor().b,
+//                                                           (unsigned char) (0.+it->getOccupancy() * 100.),
 //                                                           color_idx_occupied_thres, &m_occupiedThresColorArray);
+
+              idx_occupied_thres = generateCube(voxel, cube_template, idx_occupied_thres, &m_occupiedThresArray);
+              color_idx_occupied_thres =  setCubeColorRGBA(255, 255, 255,
+                                                           (unsigned char) ( 255.),
+                                                           color_idx_occupied_thres, &m_occupiedThresColorArray);
 
               m_grid_voxels.push_back(voxel);
           }

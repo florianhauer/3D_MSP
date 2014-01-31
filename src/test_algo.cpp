@@ -1,10 +1,11 @@
 
 #include "MSP3D.h"
 #include <octomap_utils.h>
+//#include <ctime>
 
 int main(int argc, char** argv) {
 
-	int max_depth=3;
+	int max_depth=4;
 	//double max_size=0.1*pow(2,16)*sqrt(3);
 	octomap::OcTree tree(0.1);  // create empty tree with resolution 0.1
 	int mm=32;
@@ -99,22 +100,27 @@ int main(int argc, char** argv) {
 
 	std::cout << "Create algo" << std::endl;
 	msp::MSP3D algo(tree,max_depth);
-	octomap::point3d start(-3000.0,-3000.0,-3000.0);
+	octomap::point3d start(-3250.0,-3250.0,-3250.0);
 	octomap::point3d end(3000.0,3000.0,3000.0);
 	std::cout << "Init algo" << std::endl;
 	algo.setObstacles(obstacles);
 	algo.init(start,end);
 	std::cout << "Run algo" << std::endl;
 	double scale=tree.getResolution()*pow(2,16-max_depth)/(1-8);
+	  clock_t tstart = clock();
 	if(algo.run()){
+
+
+		  std::cout << "Time to run: " << (clock()-tstart)*1.0/CLOCKS_PER_SEC << std::endl;
 		std::deque<octomap::point3d> sol=algo.getPath();
 		std::cout << "Path length: " << sol.size() << std::endl;
-		std:;cout << "Path cost: " << algo.getPathCost() << std::endl;
+		std::cout << "Path cost: " << algo.getPathCost() << std::endl;
 		std::cout << "Path :" << std::endl;
 		for(std::deque<octomap::point3d>::iterator it=sol.begin(),end=sol.end();it!=end;++it){
 			std::cout << (((*it)*(1/scale))+octomap::point3d(3.5,3.5,3.5))*(1.0/7.0) << std::endl;
 		}
 	}else{
+		  std::cout << "Time to run: " << (clock()-tstart)*1.0/CLOCKS_PER_SEC << std::endl;
 		std::cout << "No path exists between the given start and end points" << std::endl;
 	}
 	std::cout << "fin" << std::endl;

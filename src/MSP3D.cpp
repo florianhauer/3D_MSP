@@ -21,9 +21,9 @@ bool MSP3D::init(octomap::point3d start,octomap::point3d end){
 		m_end_coord=m_tree.keyToCoord(m_end);
 		m_current_path.push_back(m_start_coord);
 		m_nb_step=0;
-		std::stringstream it_name;
-		it_name << "iteration" << m_nb_step << ".ot";
-		visu_init(std::string(it_name.str()));
+//		std::stringstream it_name;
+//		it_name << "iteration" << m_nb_step << ".ot";
+//		visu_init(std::string(it_name.str()));
 		m_nb_step++;
 		return true;
 	}
@@ -31,7 +31,7 @@ bool MSP3D::init(octomap::point3d start,octomap::point3d end){
 }
 
 bool MSP3D::step(){
-	std::cout << "Calculate Graph" << std::endl;
+//	std::cout << "Calculate Graph" << std::endl;
 	reducedGraph();
 //	std::set<kshortestpaths::BaseVertex*>  res;
 //	std::map<int,int> neighboor_counts;
@@ -60,11 +60,11 @@ bool MSP3D::step(){
 	// shortest path
 	kshortestpaths::YenTopKShortestPathsAlg yenAlg(m_graph, m_graph.get_vertex(m_start_index),m_graph.get_vertex(m_end_index));
 	bool got_next=false;
-	std::cout << "Solve shortest path" << std::endl;
+//	std::cout << "Solve shortest path" << std::endl;
 	if(m_visited.count(m_current_coord)==0){
-		std::cout << "First visit" << std::endl;
+//		std::cout << "First visit" << std::endl;
 		if(yenAlg.has_next()){
-			std::cout << "Existing path" << std::endl;
+//			std::cout << "Existing path" << std::endl;
 			got_next=true;
 			m_visited[m_current_coord]=0;
 		}
@@ -78,7 +78,7 @@ bool MSP3D::step(){
 			got_next=true;
 		}
 	}
-	std::cout << "End of step update" << std::endl;
+//	std::cout << "End of step update" << std::endl;
 
 	//TODO: check if the path contains obstacles (cost > M) if yes change get next to false
 
@@ -86,22 +86,22 @@ bool MSP3D::step(){
 	if(got_next){
 		//go forward // if goal return false;
 		kshortestpaths::BasePath* result =yenAlg.next();
-		std::cout << "Cost: " << result->Weight() << " Length: " << result->length() << std::endl;
-		std::stringstream it_name;
-		it_name << "iteration" << m_nb_step << ".ot";
-		visu(std::string(it_name.str()),result);
+//		std::cout << "Cost: " << result->Weight() << " Length: " << result->length() << std::endl;
+//		std::stringstream it_name;
+//		it_name << "iteration" << m_nb_step << ".ot";
+//		visu(std::string(it_name.str()),result);
 		if(result->Weight()>=m_M){
 			//no path without obstacles from current to finish
-			std::cout << "shortest path with obstacles" << std::endl;
+//			std::cout << "shortest path with obstacles" << std::endl;
 			got_next=false;
 		}else{
-			std::cout << "shortest path found" << std::endl;
-			for(int i=0;i<result->length();++i)
-			{
-				std::cout << m_nodes[result->GetVertex(i)->getID()].first;
-				std::cout << "->";
-			}
-			std::cout << std::endl <<  "*********************************************" << std::endl;
+//			std::cout << "shortest path found" << std::endl;
+//			for(int i=0;i<result->length();++i)
+//			{
+//				std::cout << m_nodes[result->GetVertex(i)->getID()].first;
+//				std::cout << "->";
+//			}
+//			std::cout << std::endl <<  "*********************************************" << std::endl;
 			int next_point_id=result->GetVertex(1)->getID();
 			//do stuff to prepare next iteration
 			m_visited[m_current_coord]=	m_visited[m_current_coord]+1;
@@ -168,9 +168,9 @@ double MSP3D::getPathCost(){
 	++it;
 	for(0;it!=end;++it){
 		cost += low_cost(*it);
-		std::cout << low_cost(*it) << " -> ";
+//		std::cout << low_cost(*it) << " -> ";
 	}
-	std::cout<<std::endl;
+//	std::cout<<std::endl;
 	return cost;
 }
 
@@ -221,7 +221,7 @@ void MSP3D::reducedGraph(){
 	}
 	int l=m_nodes.size();
 
-	std::cout<< "number of nodes: " << l << std::endl;
+//	std::cout<< "number of nodes: " << l << std::endl;
 	for(int i=0;i<l;++i){
 		// !!!!!!!!!!!!!  if not in path?
 //		std::cout<< "node " << i << ":" << m_nodes[i].first <<std::endl;
