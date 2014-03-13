@@ -153,6 +153,7 @@ namespace octomap {
     static void registerTreeType(AbstractOcTree* tree);
 
     static const std::string fileHeader;
+    static const std::string fileHeader2;
   };
 
 

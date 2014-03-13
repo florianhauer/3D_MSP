@@ -144,7 +144,7 @@ namespace octomap {
     std::getline(s, line);
     unsigned size;
     double res;
-    if (line.compare(0,AbstractOccupancyOcTree::binaryFileHeader.length(), AbstractOccupancyOcTree::binaryFileHeader) ==0){
+    if (line.compare(0,AbstractOccupancyOcTree::binaryFileHeader.length(), AbstractOccupancyOcTree::binaryFileHeader) ==0 || line.compare(0,AbstractOccupancyOcTree::binaryFileHeader2.length(), AbstractOccupancyOcTree::binaryFileHeader2) ==0){
       std::string id;
       if (!AbstractOcTree::readHeader(s, id, size, res))
         return false;
@@ -178,4 +178,5 @@ namespace octomap {
   }
 
   const std::string AbstractOccupancyOcTree::binaryFileHeader = "# Octomap OcTree file";
+  const std::string AbstractOccupancyOcTree::binaryFileHeader2 = "# Octomap OcTree binary file";
 }

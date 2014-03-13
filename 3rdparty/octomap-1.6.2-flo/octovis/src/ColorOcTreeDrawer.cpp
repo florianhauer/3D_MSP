@@ -97,8 +97,8 @@ namespace octomap {
 
 
       drawOctreeGrid();
-      //drawPPath();
-    drawOccupiedVoxels();
+      drawPPath();
+    //drawOccupiedVoxels();
 
 //      if (m_drawOccupied)
 //        drawOccupiedVoxels();

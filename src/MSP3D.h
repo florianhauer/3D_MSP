@@ -1,6 +1,7 @@
 
 #include <octomap/octomap.h>
 #include <octomap/OcTree.h>
+#include <octomap/ColorOcTree.h>
 #include <deque>
 #include <map>
 #include <vector>
@@ -37,6 +38,8 @@ namespace msp{
 			std::deque<octomap::point3d> getPath();
 			double getPathCost();
 			void setObstacles(std::vector<std::pair<octomap::point3d,double> > obstacles);
+			std::vector<octomap::point3d> m_child_dir;
+
 		protected:
 			bool inPath(octomap::point3d pt,double size);
 			octomap::OcTreeNode* findNode(octomap::point3d pt);
@@ -49,8 +52,10 @@ namespace msp{
 			bool is_in(octomap::point3d pt,std::pair<octomap::point3d,double> node);
 			double cost(int i, int j);
 			double cost_func(double F);
+			void copyNode(octomap::OcTreeNode* n,octomap::OcTreeNode* nc);
 			void visu(std::string filename, kshortestpaths::BasePath* path);
 			void visu_init(std::string filename);
+			void add_node_to_reduced_vertices(octomap::OcTreeNode* node,octomap::point3d coord, double size);
 			octomap::OcTreeKey m_start;
 			octomap::OcTreeKey m_end;
 			octomap::point3d m_start_coord;

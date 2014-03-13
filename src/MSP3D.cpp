@@ -11,6 +11,14 @@ namespace msp{
 MSP3D::MSP3D(octomap::OcTree &tree, int max_depth):m_tree(tree),m_path_found(false),m_alpha(1.0),m_eps(tree.getResolution()/10.0),m_max_tree_depth(max_depth),m_lambda1(0.999),m_lambda2(0.001) {
 	m_M=100*pow(8,max_depth);
 	m_epsilon=pow(0.5,1+3*m_max_tree_depth);
+	m_child_dir.push_back(octomap::point3d(-1,-1,-1));
+	m_child_dir.push_back(octomap::point3d(1,-1,-1));
+	m_child_dir.push_back(octomap::point3d(-1,1,-1));
+	m_child_dir.push_back(octomap::point3d(1,1,-1));
+	m_child_dir.push_back(octomap::point3d(-1,-1,1));
+	m_child_dir.push_back(octomap::point3d(1,-1,1));
+	m_child_dir.push_back(octomap::point3d(-1,1,1));
+	m_child_dir.push_back(octomap::point3d(1,1,1));
 }
 
 bool MSP3D::init(octomap::point3d start,octomap::point3d end){
@@ -24,8 +32,12 @@ bool MSP3D::init(octomap::point3d start,octomap::point3d end){
 //		std::stringstream it_name;
 //		it_name << "iteration" << m_nb_step << ".ot";
 //		visu_init(std::string(it_name.str()));
+//		std::cout << it_name.str() << std::endl;
 		m_nb_step++;
 		return true;
+	}else{
+		std::cout << "start or goal not on map" << std::endl;
+		exit(1);
 	}
 	return false;
 }
@@ -115,13 +127,17 @@ bool MSP3D::step(){
 			m_current_path.push_back(m_nodes[next_point_id].first);
 			m_path_cost.push_back(m_cost[next_point_id]);
 
-			if(result->length()>2){
-				int next_point_id2=result->GetVertex(2)->getID();
+			int mv_fwd=2;
+			while(result->length()>mv_fwd){
+				int next_point_id2=result->GetVertex(mv_fwd)->getID();
 				if(m_nodes[next_point_id2].second==m_nodes[next_point_id].second){
 					m_visited[m_nodes[next_point_id].first]=	m_visited[m_nodes[next_point_id].first]+1;
 					m_current_path.push_back(m_nodes[next_point_id2].first);
 					m_path_cost.push_back(m_cost[next_point_id2]);
 					next_point_id=next_point_id2;
+					++mv_fwd;
+				}else{
+					break;
 				}
 			}
 	//		std::cout<<"after adding element"<< std::endl;
@@ -164,7 +180,7 @@ bool MSP3D::step(){
 }
 
 bool MSP3D::run(){
-	while(step()){++m_nb_step;}
+	while(step()){std::cout<<++m_nb_step;}
 	if(m_path_found){
 		return true;
 	}else{
@@ -208,32 +224,52 @@ bool MSP3D::inPath(octomap::point3d pt,double size){
 	return false;
 }
 
+void MSP3D::add_node_to_reduced_vertices(octomap::OcTreeNode* node,octomap::point3d coord, double size){
+//	std::cout << coord << " , " << size << " , " << node->getOccupancy() <<std::endl;
+	if((coord-m_current_coord).norm()>m_alpha*size  || !(node->hasChildren())){
+		if(!inPath(coord,size)){
+			m_nodes.push_back(std::pair<octomap::point3d,double>(coord,size));
+			m_cost.push_back(cost_func(node->getOccupancy())*pow(size/m_tree.getNodeSize(m_max_tree_depth),3));
+		}
+	}else{
+		for(int i=0;i<8;++i){
+			if(size<10.0 && !node->childExists(i)){
+				node->createChild(i);
+			}
+			if(node->childExists(i)){
+				add_node_to_reduced_vertices(node->getChild(i),coord+m_child_dir[i]*0.25*size,size*0.5);
+			}
+		}
+	}
+}
+
 void MSP3D::reducedGraph(){
 	m_graph.clear();
 	m_nodes.clear();
 	m_cost.clear();
 	m_start_index=-1;
 	m_end_index=-1;
-	octomap::OcTree::tree_iterator it_end=m_tree.end_tree();
-	bool skip=false;
-	int depth=0;
-	for(octomap::OcTree::tree_iterator it=m_tree.begin_tree();it!=it_end;++it){
-		if(skip){
-			if(it.getDepth()<=depth){
-				skip=false;
-			}
-		}
-		if(!skip){
-			if((it.getCoordinate()-m_current_coord).norm()>m_alpha*it.getSize()  || it.isLeaf()){
-				if(!inPath(it.getCoordinate(),it.getSize())){
-					m_nodes.push_back(std::pair<octomap::point3d,double>(it.getCoordinate(),it.getSize()));
-					m_cost.push_back(cost_func(it->getOccupancy())*pow(it.getSize()/m_tree.getNodeSize(m_max_tree_depth),3));
-				}
-				skip=true;
-				depth=it.getDepth();
-			}
-		}
-	}
+	add_node_to_reduced_vertices(m_tree.getRoot(),octomap::point3d(0,0,0),m_tree.getNodeSize(0));
+//	octomap::OcTree::tree_iterator it_end=m_tree.end_tree();
+//	bool skip=false;
+//	int depth=0;
+//	for(octomap::OcTree::tree_iterator it=m_tree.begin_tree();it!=it_end;++it){
+//		if(skip){
+//			if(it.getDepth()<=depth){
+//				skip=false;
+//			}
+//		}
+//		if(!skip){
+//			if((it.getCoordinate()-m_current_coord).norm()>m_alpha*it.getSize()  || it.isLeaf()){
+//				if(!inPath(it.getCoordinate(),it.getSize())){
+//					m_nodes.push_back(std::pair<octomap::point3d,double>(it.getCoordinate(),it.getSize()));
+//					m_cost.push_back(cost_func(it->getOccupancy())*pow(it.getSize()/m_tree.getNodeSize(m_max_tree_depth),3));
+//				}
+//				skip=true;
+//				depth=it.getDepth();
+//			}
+//		}
+//	}
 	int l=m_nodes.size();
 
 //	std::cout<< "number of nodes: " << l << std::endl;
@@ -245,7 +281,7 @@ void MSP3D::reducedGraph(){
 //			std::cout<<"start: "<< m_nodes[i].first <<std::endl;
 			if(m_start_index!=-1){
 				std::cout << "2 start nodes, fail" << std::endl;
-				exit(1);
+				//exit(1);
 			}
 			m_start_index=i;
 		}
@@ -253,7 +289,7 @@ void MSP3D::reducedGraph(){
 //			std::cout<<"end: "<< m_nodes[i].first <<std::endl;
 			if(m_end_index!=-1){
 				std::cout << "2 end nodes, fail" << std::endl;
-				exit(1);
+				//exit(1);
 			}
 			m_end_index=i;
 		}
@@ -287,35 +323,51 @@ octomap::OcTreeNode* MSP3D::findNode(octomap::point3d pt){
 				return &(*it);
 			}
 		}
+	return NULL;
+}
+
+void MSP3D::copyNode(octomap::OcTreeNode* n,octomap::OcTreeNode* nc){
+	nc->setLogOdds(n->getLogOdds());
+	if(n->hasChildren()){
+		for(int i=0;i<8;++i){
+			if(n->childExists(i)){
+				nc->createChild(i);
+				copyNode(n->getChild(i),nc->getChild(i));
+			}
+		}
+	}
 }
 
 void MSP3D::visu(std::string filename, kshortestpaths::BasePath* path){
-	octomap::ColorOcTree tree(0.1);  // create empty tree with resolution 0.1
-
-	int mm=32;
-	for (int x=-mm; x<mm; x++) {
-		for (int y=-mm; y<mm; y++) {
-			for (int z=-mm; z<mm; z++) {
-				octomap::point3d endpoint ((float) x*100.0f, (float) y*100.0f, (float) z*100.0f);
-				tree.updateNode(endpoint, false); // integrate 'free' measurement
-			}
-		}
-	}
-
-	for(octomap::ColorOcTree::tree_iterator it = tree.begin_tree(),	end=tree.end_tree(); it!= end; ++it)
-	{
-		if(it.getDepth()>=m_max_tree_depth){
-			for(int i=0;i<8;++i){
-				if(it->childExists(i)){
-					it->deleteChild(i);
-				}
-			}
-			//octomap::point3d vec_dir(1,1,1);
-			it->setLogOdds(octomap::logodds(0));
-			//it->setLogOdds(octomap::logodds((vec_dir.cross(it.getCoordinate())).norm()/max_size));
-		}
-	}
-	tree.updateInnerOccupancy();
+	octomap::ColorOcTree tree(m_tree.getResolution());  // create empty tree with resolution 0.1
+	tree.updateNode(0,0,0,false);
+//	std::cout<< "root: " << tree.getRoot() << std::endl;
+//	std::cout<< "root: " << m_tree.getRoot() << std::endl;
+	copyNode(m_tree.getRoot(),tree.getRoot());
+//	int mm=32;
+//	for (int x=-mm; x<mm; x++) {
+//		for (int y=-mm; y<mm; y++) {
+//			for (int z=-mm; z<mm; z++) {
+//				octomap::point3d endpoint ((float) x*100.0f, (float) y*100.0f, (float) z*100.0f);
+//				tree.updateNode(endpoint, false); // integrate 'free' measurement
+//			}
+//		}
+//	}
+//
+//	for(octomap::ColorOcTree::tree_iterator it = tree.begin_tree(),	end=tree.end_tree(); it!= end; ++it)
+//	{
+//		if(it.getDepth()>=m_max_tree_depth){
+//			for(int i=0;i<8;++i){
+//				if(it->childExists(i)){
+//					it->deleteChild(i);
+//				}
+//			}
+//			//octomap::point3d vec_dir(1,1,1);
+//			it->setLogOdds(octomap::logodds(0));
+//			//it->setLogOdds(octomap::logodds((vec_dir.cross(it.getCoordinate())).norm()/max_size));
+//		}
+//	}
+//	tree.updateInnerOccupancy();
 
 	octomap::ColorOcTreeNode* n;
 //	std::cout << "starting to create color tree" << std::endl;
@@ -415,30 +467,24 @@ void MSP3D::visu(std::string filename, kshortestpaths::BasePath* path){
 }
 
 void MSP3D::visu_init(std::string filename){
-	octomap::ColorOcTree tree(0.1);  // create empty tree with resolution 0.1
 
-	int mm=32;
-	for (int x=-mm; x<mm; x++) {
-		for (int y=-mm; y<mm; y++) {
-			for (int z=-mm; z<mm; z++) {
-				octomap::point3d endpoint ((float) x*100.0f, (float) y*100.0f, (float) z*100.0f);
-				tree.updateNode(endpoint, false); // integrate 'free' measurement
-			}
-		}
-	}
+	octomap::ColorOcTree tree(m_tree.getResolution());
+	tree.updateNode(0,0,0,false);
+	copyNode(m_tree.getRoot(),tree.getRoot());
 
 	for(octomap::ColorOcTree::tree_iterator it = tree.begin_tree(),	end=tree.end_tree(); it!= end; ++it)
 	{
-		if(it.getDepth()>=m_max_tree_depth){
-			for(int i=0;i<8;++i){
-				if(it->childExists(i)){
-					it->deleteChild(i);
-				}
-			}
-			//octomap::point3d vec_dir(1,1,1);
-			it->setLogOdds(octomap::logodds(1));
-			//it->setLogOdds(octomap::logodds((vec_dir.cross(it.getCoordinate())).norm()/max_size));
-		}
+//		if(it.getDepth()>=m_max_tree_depth){
+//			for(int i=0;i<8;++i){
+//				if(it->childExists(i)){
+//					it->deleteChild(i);
+//				}
+//			}
+//			//octomap::point3d vec_dir(1,1,1);
+//			//it->setLogOdds(octomap::logodds((vec_dir.cross(it.getCoordinate())).norm()/max_size));
+//		}
+
+		it->setLogOdds(octomap::logodds(1));
 	}
 	tree.updateInnerOccupancy();
 
@@ -514,6 +560,10 @@ void MSP3D::visu_init(std::string filename){
 		binary_outfile << m_obstacles[i].second;
 //		std::cout << m_nodes[path->GetVertex(i)->getID()].first <<std::endl;
 	}
+
+//	binary_outfile /*<< std::endl << "fpath"*/ << z;
+//	m_start_coord.writeBinary(binary_outfile);
+//	binary_outfile << m_tree.getNodeSize(m_max_tree_depth);
 
 
 	binary_outfile.close();

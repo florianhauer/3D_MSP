@@ -5,7 +5,7 @@
 
 int main(int argc, char** argv) {
 
-	int max_depth=5;
+	int max_depth=6;
 	//double max_size=0.1*pow(2,16)*sqrt(3);
 	octomap::OcTree tree(0.1);  // create empty tree with resolution 0.1
 	int mm=32;
@@ -80,8 +80,8 @@ int main(int argc, char** argv) {
 
 	tree.updateInnerOccupancy();
 	//tree.writeBinary("intial tree.ot");
-	for(octomap::OcTree::tree_iterator it = tree.begin_tree(),	end=tree.end_tree(); it!= end; ++it)
-	{
+//	for(octomap::OcTree::tree_iterator it = tree.begin_tree(),	end=tree.end_tree(); it!= end; ++it)
+//	{
 //		for(int j=0;j<=it.getDepth();++j){
 //			std::cout << "\t";
 //		}
@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
 //			std::cout << "\t";
 //		}
 //		std::cout << it->getOccupancy() <<std::endl;
-	}
+//	}
 	std::cout<< "Tree depth: " << tree.getTreeDepth() << std::endl;
 	std::cout << "max occ: " << mmax << std::endl;
 

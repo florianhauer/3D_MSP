@@ -89,7 +89,7 @@ namespace octomap {
     // check if first line valid:
     std::string line;
     std::getline(s, line);
-    if (line.compare(0,fileHeader.length(), fileHeader) !=0){
+    if (line.compare(0,fileHeader.length(), fileHeader) !=0 && line.compare(0,fileHeader2.length(), fileHeader2) !=0){
       OCTOMAP_ERROR_STR("First line of OcTree file header does not start with \""<< fileHeader);
       return NULL;
     }
@@ -208,4 +208,5 @@ namespace octomap {
 
 
   const std::string AbstractOcTree::fileHeader = "# Octomap OcTree file";
+  const std::string AbstractOcTree::fileHeader2 = "# Octomap OcTree binary file";
 }

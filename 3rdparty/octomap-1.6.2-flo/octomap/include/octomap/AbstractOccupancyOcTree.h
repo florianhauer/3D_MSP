@@ -233,6 +233,7 @@ namespace octomap {
     float occ_prob_thres_log;
 
     static const std::string binaryFileHeader;
+    static const std::string binaryFileHeader2;
   };
 
 }; // end namespace
