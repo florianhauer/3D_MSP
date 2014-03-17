@@ -576,15 +576,15 @@ void ViewerGui::openOcTree(){
   //AbstractOcTree* tree = AbstractOcTree::read(m_filename);
 
 	//read previous traj
-	int length;
+	int length=0;
 	//file.read((char*)&length, sizeof(length));
 	std::deque<octomap::point3d> ppath;
 	file >> length;
-//	std::cout<< "length of previous traj" << length << std::endl;
+	std::cout<< "length of previous traj" << length << std::endl;
 	octomap::point3d pt;
 	for(int i=0;i<length;++i){
 		pt.readBinary(file);
-//		std::cout<< pt<< std::endl;
+		std::cout<< pt<< std::endl;
 		ppath.push_back(pt);
 	}
 
@@ -592,32 +592,32 @@ void ViewerGui::openOcTree(){
 	std::deque<std::pair<octomap::point3d,double> > fpath;
 	double node_size;
 	file >> length;
-//	std::cout<< "length of future traj" << length << std::endl;
+	std::cout<< "length of future traj" << length << std::endl;
 	for(int i=0;i<length;++i){
 		pt.readBinary(file);
 		file >> node_size;
-//		std::cout<< pt << "," << node_size << std::endl;
+		std::cout<< pt << "," << node_size << std::endl;
 		fpath.push_back(std::pair<octomap::point3d,double>(pt,node_size));
 	}
 
 	//read start
 	octomap::point3d start;
 	start.readBinary(file);
-//	std::cout<< "start" <<pt<< std::endl;
+	std::cout<< "start" <<pt<< std::endl;
 
 	//read end
 	octomap::point3d end;
 	end.readBinary(file);
-//	std::cout<< "end" << pt<< std::endl;
+	std::cout<< "end" << pt<< std::endl;
 
 	//read future traj
 	std::deque<std::pair<octomap::point3d,double> > obstacles;
 	file >> length;
-//	std::cout<< "length of obstacles" << length << std::endl;
+	std::cout<< "length of obstacles" << length << std::endl;
 	for(int i=0;i<length;++i){
 		pt.readBinary(file);
 		file >> node_size;
-//		std::cout<< pt << "," << node_size << std::endl;
+		std::cout<< pt << "," << node_size << std::endl;
 		obstacles.push_back(std::pair<octomap::point3d,double>(pt,node_size));
 	}
 
