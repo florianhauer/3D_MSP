@@ -824,12 +824,14 @@ namespace octomap {
     //use different method for colortree to prevent loosing information
     if (this->getTreeType().compare(std::string("ColorOcTree"))==0){
     	//((ColorOcTreeNode)this->root)->writeValue(s);
-    	(this->root)->writeValue(s);
+    	if (this->root)
+    		(this->root)->writeValue(s);
     	return s;
+    }else{
+		if (this->root)
+			this->writeBinaryNode(s, this->root);
+		return s;
     }
-    if (this->root)
-      this->writeBinaryNode(s, this->root);
-    return s;
   }
 
   template <class NODE>

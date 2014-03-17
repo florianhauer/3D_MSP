@@ -1,5 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
-PROJECT( octomapflo )
+PROJECT( octomap )
 
 ENABLE_TESTING()
 
@@ -51,13 +51,13 @@ set(INSTALL_TARGETS_DEFAULT_ARGS
 ADD_SUBDIRECTORY( src/math )
 ADD_SUBDIRECTORY( src )
 
-file(GLOB octomapflo_HDRS ${PROJECT_SOURCE_DIR}/include/octomapflo/*.h ${PROJECT_SOURCE_DIR}/include/octomapflo/*.hxx)
-install(FILES ${octomapflo_HDRS}	DESTINATION include/octomapflo)
-file(GLOB octomapflo_math_HDRS ${PROJECT_SOURCE_DIR}/include/octomapflo/math/*.h)
-install(FILES ${octomapflo_math_HDRS}	DESTINATION include/octomapflo/math)
+file(GLOB octomap_HDRS ${PROJECT_SOURCE_DIR}/include/octomap/*.h ${PROJECT_SOURCE_DIR}/include/octomap/*.hxx)
+install(FILES ${octomap_HDRS}	DESTINATION include/octomap)
+file(GLOB octomap_math_HDRS ${PROJECT_SOURCE_DIR}/include/octomap/math/*.h)
+install(FILES ${octomap_math_HDRS}	DESTINATION include/octomap/math)
 
 # Install catkin package.xml
-install(FILES package.xml DESTINATION share/octomapflo)
+install(FILES package.xml DESTINATION share/octomap)
 
 # uninstall target
 configure_file(
@@ -71,7 +71,7 @@ add_custom_target(uninstall
 
 # Export the package for use from the build-tree
 # (this registers the build-tree with a global CMake-registry)
-export(PACKAGE octomapflo)
+export(PACKAGE octomap)
  
 # Create a octomap-config.cmake file for the use from the build tree
 set(OCTOMAP_INCLUDE_DIRS "${INCLUDE_DIRS}")
@@ -88,33 +88,33 @@ configure_file(octomap-config-version.cmake.in
 #  "${INSTALL_DATA_DIR}/FooBar/CMake"
 #  COMPONENT dev)
  
-# Create a octomapflo-config.cmake file for the use from the install tree
+# Create a octomap-config.cmake file for the use from the install tree
 # and install it
 set(OCTOMAP_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
 set(OCTOMAP_LIB_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 #set(OCTOMAP_CMAKE_DIR "${INSTALL_DATA_DIR}/FooBar/CMake")
 configure_file(octomap-config.cmake.in
-  "${PROJECT_BINARY_DIR}/InstallFiles/octomapflo-config.cmake" @ONLY)
+  "${PROJECT_BINARY_DIR}/InstallFiles/octomap-config.cmake" @ONLY)
 configure_file(octomap-config-version.cmake.in
-  "${PROJECT_BINARY_DIR}/InstallFiles/octomapflo-config-version.cmake" @ONLY)
+  "${PROJECT_BINARY_DIR}/InstallFiles/octomap-config-version.cmake" @ONLY)
 install(FILES
-  "${PROJECT_BINARY_DIR}/InstallFiles/octomapflo-config.cmake"
-  "${PROJECT_BINARY_DIR}/InstallFiles/octomapflo-config-version.cmake" 
-  DESTINATION share/octomapflo/)
+  "${PROJECT_BINARY_DIR}/InstallFiles/octomap-config.cmake"
+  "${PROJECT_BINARY_DIR}/InstallFiles/octomap-config-version.cmake" 
+  DESTINATION share/octomap/)
 
 # Write pkgconfig-file:
 include(InstallPkgConfigFile)
-install_pkg_config_file(octomapflo
+install_pkg_config_file(octomap
     CFLAGS
-    LIBS -loctomapflo -loctomath
+    LIBS -loctomap -loctomath
     REQUIRES
     VERSION ${OCTOMAP_VERSION})
 
 # Documentation 
 FIND_PACKAGE(Doxygen)
 IF(DOXYGEN_FOUND)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/octomap.dox.in ${CMAKE_CURRENT_BINARY_DIR}/octomapflo.dox @ONLY)
-  ADD_CUSTOM_TARGET(docs ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/octomapflo.dox
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/octomap.dox.in ${CMAKE_CURRENT_BINARY_DIR}/octomap.dox @ONLY)
+  ADD_CUSTOM_TARGET(docs ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/octomap.dox
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     COMMENT "Generating documentation (Doxygen) at location ${PROJECT_SOURCE_DIR}/doc/html/")
 ENDIF(DOXYGEN_FOUND)
@@ -124,7 +124,7 @@ INCLUDE(CPackSettings)
 
 # Finished:
 MESSAGE ("\n")
-MESSAGE (STATUS "Compile octomapflo using: make")
-MESSAGE (STATUS "Install octomapflo using: make install")
+MESSAGE (STATUS "Compile octomap using: make")
+MESSAGE (STATUS "Install octomap using: make install")
 MESSAGE (STATUS "    (be sure to set the correct CMAKE_INSTALL_PREFIX before)")
 MESSAGE (STATUS "Compile API-documentation using: make docs\n")

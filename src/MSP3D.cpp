@@ -140,12 +140,6 @@ bool MSP3D::step(){
 					break;
 				}
 			}
-	//		std::cout<<"after adding element"<< std::endl;
-	//		for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
-	//			std::cout<< (*it) << std::endl;
-	//		}
-
-
 
 			if(getPathCost()>=m_M){
 				//no path without obstacles from start to current
@@ -181,6 +175,10 @@ bool MSP3D::step(){
 
 bool MSP3D::run(){
 	while(step()){std::cout<<++m_nb_step;}
+	std::stringstream it_name;
+	it_name << "iteration" << m_nb_step << ".ot";
+	kshortestpaths::BasePath result(std::vector<kshortestpaths::BaseVertex*>(),0);
+	visu(std::string(it_name.str()),&result);
 	if(m_path_found){
 		return true;
 	}else{
@@ -331,7 +329,9 @@ void MSP3D::copyNode(octomap::OcTreeNode* n,octomap::OcTreeNode* nc){
 	if(n->hasChildren()){
 		for(int i=0;i<8;++i){
 			if(n->childExists(i)){
-				nc->createChild(i);
+				if(!(nc->childExists(i))){
+					nc->createChild(i);
+				}
 				copyNode(n->getChild(i),nc->getChild(i));
 			}
 		}
@@ -341,6 +341,12 @@ void MSP3D::copyNode(octomap::OcTreeNode* n,octomap::OcTreeNode* nc){
 void MSP3D::visu(std::string filename, kshortestpaths::BasePath* path){
 	octomap::ColorOcTree tree(m_tree.getResolution());  // create empty tree with resolution 0.1
 	tree.updateNode(0,0,0,false);
+	octomap::ColorOcTreeNode* it=tree.getRoot();
+	for(int i=0;i<8;++i){
+		if(it->childExists(i)){
+			it->deleteChild(i);
+		}
+	}
 //	std::cout<< "root: " << tree.getRoot() << std::endl;
 //	std::cout<< "root: " << m_tree.getRoot() << std::endl;
 	copyNode(m_tree.getRoot(),tree.getRoot());
@@ -470,6 +476,14 @@ void MSP3D::visu_init(std::string filename){
 
 	octomap::ColorOcTree tree(m_tree.getResolution());
 	tree.updateNode(0,0,0,false);
+	octomap::ColorOcTreeNode* it=tree.getRoot();
+	for(int i=0;i<8;++i){
+		if(it->childExists(i)){
+			it->deleteChild(i);
+		}
+	}
+//	it->pruneNode();
+
 	copyNode(m_tree.getRoot(),tree.getRoot());
 
 	for(octomap::ColorOcTree::tree_iterator it = tree.begin_tree(),	end=tree.end_tree(); it!= end; ++it)
@@ -487,6 +501,23 @@ void MSP3D::visu_init(std::string filename){
 		it->setLogOdds(octomap::logodds(1));
 	}
 	tree.updateInnerOccupancy();
+
+
+//	for(octomap::ColorOcTree::tree_iterator it = tree.begin_tree(),	end=tree.end_tree(); it!= end; ++it)
+//	{
+//		for(int j=0;j<=it.getDepth();++j){
+//			std::cout << "\t";
+//		}
+////		std::cout<< it.getDepth()<<std::endl;
+//		std::cout<< it.getCoordinate()<<std::endl;
+////		std::cout<< it.getSize()<<std::endl;
+////		std::cout<< it.isLeaf()<<std::endl;
+//
+//		for(int j=0;j<=it.getDepth();++j){
+//			std::cout << "\t";
+//		}
+//		std::cout << it->getOccupancy() <<std::endl;
+//	}
 
 
 //	for(int i=0;i<m_nodes.size();++i){
