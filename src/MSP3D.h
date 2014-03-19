@@ -35,6 +35,7 @@ namespace msp{
 			bool init(octomap::point3d start,octomap::point3d end);
 			bool step();
 			bool run();
+			bool runAs();
 			std::deque<octomap::point3d> getPath();
 			double getPathCost();
 			void setObstacles(std::vector<std::pair<octomap::point3d,double> > obstacles);
@@ -45,6 +46,7 @@ namespace msp{
 			octomap::OcTreeNode* findNode(octomap::point3d pt);
 			double low_cost(octomap::point3d pt);
 			void reducedGraph();
+			void Gfull();
 			void iterativeReducedGraph(octomap::OcTree::NodeType *n);
 			bool neighboor(std::pair<octomap::point3d,double> &na,std::pair<octomap::point3d,double> &nb);
 			bool is_start(std::pair<octomap::point3d,double> &node);

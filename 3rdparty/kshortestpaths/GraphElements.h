@@ -24,12 +24,12 @@ public:
 	// Determine priority.
 	bool operator()(const T& a, const T& b) const
 	{
-		return a.Weight() > b.Weight();
+		return a.f() > b.f();
 	}
 
 	bool operator()(const T* a, const T* b) const
 	{
-		return a->Weight() > b->Weight();
+		return a->f() > b->f();
 	}
 };
 
@@ -40,12 +40,12 @@ public:
 	// Determine priority.
 	bool operator()(const T& a, const T& b) const
 	{
-		return a.Weight() < b.Weight();
+		return a.f() < b.f();
 	}
 
 	bool operator()(const T* a, const T* b) const
 	{
-		return a->Weight() < b->Weight();
+		return a->f() < b->f();
 	}
 };
 
@@ -77,14 +77,22 @@ class BaseVertex
 {
 	int m_nID;
 	double m_dWeight;
+	double m_h;
 
 public:
+
+	BaseVertex():m_nID(-1),m_dWeight(0),m_h(0){}
 
 	int getID() const { return m_nID; }
 	void setID(int ID_) { m_nID = ID_; }
 
 	double Weight() const { return m_dWeight; }
 	void Weight(double val) { m_dWeight = val; }
+
+	double h() const { return m_h; }
+	void h(double val) { m_h = val; }
+
+	double f() const { return m_h+m_dWeight; }
 
 	void PrintOut(std::ostream& out_stream)
 	{
@@ -121,6 +129,8 @@ public:
 
 	double Weight() const { return m_dWeight; }
 	void Weight(double val) { m_dWeight = val; }
+
+	double f() const { return m_dWeight; }
 
 	int length() { return m_nLength; }
 

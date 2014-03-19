@@ -143,6 +143,16 @@ void Graph::add_vertex(int node_id){
 	m_nVertexNum = m_vtVertices.size();
 }
 
+void Graph::add_vertex(int node_id,double h){
+	BaseVertex* vertex_pt = NULL;
+	vertex_pt = new BaseVertex();
+	vertex_pt->setID(node_id);
+	vertex_pt->h(h);
+	m_mpVertexIndex[node_id] = vertex_pt;
+	m_vtVertices.push_back(vertex_pt);
+	m_nVertexNum = m_vtVertices.size();
+}
+
 void Graph::add_edge(int start_vertex, int end_vertex, double edge_weight){
 //	std::cout<< "add edge: "<< start_vertex << "," << end_vertex << "," << edge_weight << std::endl;
 	///3.2.1 construct the vertices

@@ -1,5 +1,6 @@
 #include "MSP3D.h"
 #include "YenTopKShortestPathsAlg.h"
+#include "DijkstraShortestPathAlg.h"
 #include <set>
 #include <octomap/ColorOcTree.h>
 #include <cmath>
@@ -100,9 +101,9 @@ bool MSP3D::step(){
 		//go forward // if goal return false;
 		kshortestpaths::BasePath* result =yenAlg.next();
 //		std::cout << "Cost: " << result->Weight() << " Length: " << result->length() << std::endl;
-		std::stringstream it_name;
-		it_name << "iteration" << m_nb_step << ".ot";
-		visu(std::string(it_name.str()),result);
+//		std::stringstream it_name;
+//		it_name << "iteration" << m_nb_step << ".ot";
+//		visu(std::string(it_name.str()),result);
 		if(result->Weight()>=m_M){
 			//no path without obstacles from current to finish
 //			std::cout << "shortest path with obstacles" << std::endl;
@@ -174,7 +175,7 @@ bool MSP3D::step(){
 }
 
 bool MSP3D::run(){
-	while(step()){std::cout<<++m_nb_step;}
+	while(step()){/*std::cout<<++m_nb_step;*/}
 	std::stringstream it_name;
 	it_name << "iteration" << m_nb_step << ".ot";
 	kshortestpaths::BasePath result(std::vector<kshortestpaths::BaseVertex*>(),0);
@@ -184,6 +185,31 @@ bool MSP3D::run(){
 	}else{
 		return false;
 	}
+}
+
+
+bool MSP3D::runAs(){
+	clock_t tstart = clock();
+	Gfull();
+	clock_t tend1 = clock();
+	kshortestpaths::DijkstraShortestPathAlg shortest_path_alg(&m_graph);
+	kshortestpaths::BasePath* result =
+		shortest_path_alg.get_shortest_path(
+				m_graph.get_vertex(m_start_index), m_graph.get_vertex(m_end_index));
+	clock_t tend2 = clock();
+	std::cout << "Time to calculate GFull: " << (tend1-tstart)*1.0/CLOCKS_PER_SEC << std::endl;
+	std::cout << "Time to calculate A*: " << (tend2-tend1)*1.0/CLOCKS_PER_SEC << std::endl;
+	std::cout << "Total time: " << (tend2-tstart)*1.0/CLOCKS_PER_SEC << std::endl;
+	std::cout <<  "start :" << m_start_index << ", end :" << m_end_index << std::endl;
+//	double scale=m_tree.getResolution()*pow(2,16-m_max_tree_depth)/(1-8);
+//	for(int i=0;i<result->length();++i)
+//	{
+//		//std::cout << m_nodes[result->GetVertex(i)->getID()].first;
+//		std::cout << (((m_nodes[result->GetVertex(i)->getID()].first)*(1/scale))+octomap::point3d(3.5,3.5,3.5))*(1.0/7.0);
+//		std::cout << "->";
+//	}
+//	std::cout << std::endl <<  "*********************************************" << std::endl;
+	std:;cout << "Cost: " << result->Weight() << " Length: " << result->length() << std::endl;
 }
 
 std::deque<octomap::point3d> MSP3D::getPath(){return m_current_path;}
@@ -285,6 +311,63 @@ void MSP3D::reducedGraph(){
 		}
 		if(is_goal(m_nodes[i])){
 //			std::cout<<"end: "<< m_nodes[i].first <<std::endl;
+			if(m_end_index!=-1){
+				std::cout << "2 end nodes, fail" << std::endl;
+				//exit(1);
+			}
+			m_end_index=i;
+		}
+	}
+	if(m_start_index==-1){
+		std::cout << "0 start node, fail" << std::endl;
+	}
+	if(m_end_index==-1){
+		std::cout << "0 end node, fail" << std::endl;
+	}
+	for(int i=0;i<l;++i){
+		for(int j=i+1;j<l;++j){
+				if(neighboor(m_nodes[i],m_nodes[j])){
+//					std::cout<< "neighboor:" << i << "," << j <<std::endl;
+//					std::cout<< "cost:" << cost(i,j) <<std::endl;
+					m_graph.add_edge(i,j,m_cost[j]);
+					m_graph.add_edge(j,i,m_cost[i]);
+				}
+		}
+	}
+}
+
+
+void MSP3D::Gfull(){
+	m_graph.clear();
+	m_nodes.clear();
+	m_cost.clear();
+	m_start_index=-1;
+	m_end_index=-1;
+	m_current_coord=m_start_coord;
+	//Calcul of Gfull
+	for(octomap::OcTree::leaf_iterator it = m_tree.begin_leafs(),	end=m_tree.end_leafs(); it!= end; ++it){
+		if(it->getOccupancy()<1-m_epsilon){
+			m_nodes.push_back(std::pair<octomap::point3d,double>(it.getCoordinate(),it.getSize()));
+			m_cost.push_back(cost_func(it->getOccupancy())*pow(it.getSize()/m_tree.getNodeSize(m_max_tree_depth),3));
+		}
+	}
+	int l=m_nodes.size();
+
+	std::cout<< "number of nodes: " << l << std::endl;
+	for(int i=0;i<l;++i){
+		// !!!!!!!!!!!!!  if not in path?
+//		std::cout<< "node " << i << ":" << m_nodes[i].first <<std::endl;
+		m_graph.add_vertex(i,m_lambda2*(m_nodes[i].first-m_end_coord).norm());
+		if(is_start(m_nodes[i])){
+			std::cout<<"start: "<< m_nodes[i].first <<std::endl;
+			if(m_start_index!=-1){
+				std::cout << "2 start nodes, fail" << std::endl;
+				//exit(1);
+			}
+			m_start_index=i;
+		}
+		if(is_goal(m_nodes[i])){
+			std::cout<<"end: "<< m_nodes[i].first <<std::endl;
 			if(m_end_index!=-1){
 				std::cout << "2 end nodes, fail" << std::endl;
 				//exit(1);

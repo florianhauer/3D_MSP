@@ -15,6 +15,7 @@
 #build/bin directory
 *build/*
 *bin/*
+3rdparty/kshortestpaths/build/
 
 #temporary files
 *~

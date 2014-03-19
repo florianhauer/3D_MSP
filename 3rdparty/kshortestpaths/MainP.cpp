@@ -22,11 +22,22 @@ using namespace kshortestpaths;
 
 void testDijkstraGraph()
 {
-	Graph* my_graph_pt = new Graph("../data/test_1");
-	DijkstraShortestPathAlg shortest_path_alg(my_graph_pt);
+	kshortestpaths::Graph my_graph;
+	for(int i=0;i<7;++i){
+		my_graph.add_vertex(i,0.3);
+	}
+	my_graph.add_vertex(7,0.0);
+	for(int i=0;i<5;++i){
+		my_graph.add_edge(i,i+1,0.4);
+		my_graph.add_edge(i,i+2,0.5);
+		my_graph.add_edge(i,i+3,0.6);
+	}
+
+	//Graph* my_graph_pt = new Graph("../data/test_1");
+	DijkstraShortestPathAlg shortest_path_alg(&my_graph);
 	BasePath* result =
 		shortest_path_alg.get_shortest_path(
-			my_graph_pt->get_vertex(0), my_graph_pt->get_vertex(5));
+				my_graph.get_vertex(0), my_graph.get_vertex(7));
 	result->PrintOut(cout);
 }
 
@@ -103,10 +114,10 @@ int main(...)
 {
 //	cout << "Welcome to the real world!" << endl;
 
-	//testDijkstraGraph();
+	testDijkstraGraph();
 //	cout << "Yen" << endl;
 //	testYenAlg();
-	cout << "Yen 2" << endl;
-	testYenAlg2();
+//	cout << "Yen 2" << endl;
+//	testYenAlg2();
 //	testDijkstraGraphDisconnectedGraph();
 }

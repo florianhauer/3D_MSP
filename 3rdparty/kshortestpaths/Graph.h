@@ -71,6 +71,7 @@ public:
 	void clear();
 
 	void add_vertex(int node_id);
+	void add_vertex(int node_id,double h);
 	void add_edge(int start_vertex, int end_vertex, double edge_weight);
 
 	BaseVertex* get_vertex(int node_id);
