@@ -30,11 +30,11 @@ bool MSP3D::init(octomap::point3d start,octomap::point3d end){
 		m_end_coord=m_tree.keyToCoord(m_end);
 		m_current_path.push_back(m_start_coord);
 		m_nb_step=0;
-		std::stringstream it_name;
-		it_name << "iteration" << m_nb_step << ".ot";
-		visu_init(std::string(it_name.str()));
-		std::cout << it_name.str() << std::endl;
-		m_nb_step++;
+//		std::stringstream it_name;
+//		it_name << "iteration" << m_nb_step << ".ot";
+//		visu_init(std::string(it_name.str()));
+//		std::cout << it_name.str() << std::endl;
+//		m_nb_step++;
 		return true;
 	}else{
 		std::cout << "start or goal not on map" << std::endl;
@@ -101,9 +101,9 @@ bool MSP3D::step(){
 		//go forward // if goal return false;
 		kshortestpaths::BasePath* result =yenAlg.next();
 //		std::cout << "Cost: " << result->Weight() << " Length: " << result->length() << std::endl;
-//		std::stringstream it_name;
-//		it_name << "iteration" << m_nb_step << ".ot";
-//		visu(std::string(it_name.str()),result);
+		std::stringstream it_name;
+		it_name << "iteration" << m_nb_step << ".ot";
+		visu(std::string(it_name.str()),result);
 		if(result->Weight()>=m_M){
 			//no path without obstacles from current to finish
 //			std::cout << "shortest path with obstacles" << std::endl;
