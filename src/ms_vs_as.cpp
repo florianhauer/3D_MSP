@@ -1,11 +1,12 @@
 
 #include "MSP3D.h"
 #include <octomap_utils.h>
+#include <cstdlib>
 //#include <ctime>
 
 int main(int argc, char** argv) {
 
-	int max_depth=3;
+	int max_depth=6;
 	//double max_size=0.1*pow(2,16)*sqrt(3);
 	octomap::OcTree tree(0.1);  // create empty tree with resolution 0.1
 	int mm=32;
@@ -35,7 +36,8 @@ int main(int argc, char** argv) {
 			double lim=tree.getNodeSize(max_depth);
 			if((it.getDepth()==max_depth && pt.x()>0 && pt.x()<lim && !(pt.z()>(tree.getNodeSize(0)/2.0-lim) && pt.y()>(tree.getNodeSize(0)/2.0-lim)))
 			//		||	(it.getDepth()==max_depth && pt.x()>-2*lim && pt.x()<-lim && !(pt.z()<-(tree.getNodeSize(0)/2.0-lim) && pt.y()<-(tree.getNodeSize(0)/2.0-lim)))
-					)	{
+					|| rand()%25==1
+			)	{
 //				std::cout<< pt << std::endl;
 				it->setLogOdds(octomap::logodds(1));
 				obstacles.push_back(std::pair<octomap::point3d,double>(pt,lim));
@@ -45,7 +47,7 @@ int main(int argc, char** argv) {
 				//it->setValue(0);
 				octomap::point3d vec_dir(1,1,1);
 				//it->setLogOdds(octomap::logodds(1));
-				it->setLogOdds(octomap::logodds((vec_dir.cross(it.getCoordinate())).norm()/max_size));
+				//it->setLogOdds(octomap::logodds((vec_dir.cross(it.getCoordinate())).norm()/max_size));
 //				std::cout << (vec_dir.cross(it.getCoordinate())).norm()/max_size << std::endl;
 				if((vec_dir.cross(it.getCoordinate())).norm()/max_size>mmax){
 					mmax=(vec_dir.cross(it.getCoordinate())).norm()/max_size;
@@ -68,25 +70,36 @@ int main(int argc, char** argv) {
 	std::cout << "Init algo" << std::endl;
 	algo.setObstacles(obstacles);
 	algo.init(start,end);
-	std::cout << "Run algo" << std::endl;
-	double scale=tree.getResolution()*pow(2,16-max_depth)/(1-8);
-	  clock_t tstart = clock();
-	if(algo.run()){
-
-
-		  std::cout << "Time to run: " << (clock()-tstart)*1.0/CLOCKS_PER_SEC << std::endl;
-		std::deque<octomap::point3d> sol=algo.getPath();
-		std::cout << "Path length: " << sol.size() << std::endl;
-		std::cout << "Path cost: " << algo.getPathCost() << std::endl;
-//		std::cout << "Path :" << std::endl;
-//		for(std::deque<octomap::point3d>::iterator it=sol.begin(),end=sol.end();it!=end;++it){
-//			std::cout << (((*it)*(1/scale))+octomap::point3d(3.5,3.5,3.5))*(1.0/7.0) << std::endl;
-//		}
-	}else{
-		  std::cout << "Time to run: " << (clock()-tstart)*1.0/CLOCKS_PER_SEC << std::endl;
-		std::cout << "No path exists between the given start and end points" << std::endl;
-	}
 	//Run A*
 	std::cout<< "Running A*" << std::endl;
 	algo.runAs();
+	std::vector<double> alphas;
+	alphas.push_back(1.0);
+	alphas.push_back(1.25);
+	alphas.push_back(1.5);
+	alphas.push_back(1.75);
+	alphas.push_back(2.0);
+	alphas.push_back(3.0);
+	for(int i=alphas.size()-1;i>=0;--i){
+		algo.init(start,end);
+		algo.setAlpha(alphas[i]);
+	//	cout<<"Press ENTER to continue....."<<endl<<endl;
+	//	cin.ignore(1);
+		std::cout <<std::endl << "Run algo for alpha " << alphas[i] << std::endl;
+		double scale=tree.getResolution()*pow(2,16-max_depth)/(1-8);
+		  clock_t tstart = clock();
+		if(algo.run()){
+			  std::cout << "Time to run: " << (clock()-tstart)*1.0/CLOCKS_PER_SEC << std::endl;
+			std::deque<octomap::point3d> sol=algo.getPath();
+			std::cout << "Path length: " << sol.size() << std::endl;
+			std::cout << "Path cost: " << algo.getPathCost() << std::endl;
+	//		std::cout << "Path :" << std::endl;
+	//		for(std::deque<octomap::point3d>::iterator it=sol.begin(),end=sol.end();it!=end;++it){
+	//			std::cout << (((*it)*(1/scale))+octomap::point3d(3.5,3.5,3.5))*(1.0/7.0) << std::endl;
+	//		}
+		}else{
+			  std::cout << "Time to run: " << (clock()-tstart)*1.0/CLOCKS_PER_SEC << std::endl;
+			std::cout << "No path exists between the given start and end points" << std::endl;
+		}
+}
 }

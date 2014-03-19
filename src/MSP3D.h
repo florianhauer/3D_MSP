@@ -38,6 +38,7 @@ namespace msp{
 			bool runAs();
 			std::deque<octomap::point3d> getPath();
 			double getPathCost();
+			void setAlpha(double a){m_alpha=a;}
 			void setObstacles(std::vector<std::pair<octomap::point3d,double> > obstacles);
 			std::vector<octomap::point3d> m_child_dir;
 
@@ -71,6 +72,8 @@ namespace msp{
 			std::deque<octomap::point3d> m_current_path;
 			kshortestpaths::Graph m_graph;
 			std::map<octomap::point3d,double,Point3D_Less> m_visited;
+			std::map<octomap::point3d,std::set<octomap::point3d,Point3D_Less>,Point3D_Less> m_misleading;
+			std::set<octomap::point3d,Point3D_Less> m_current_forbidden;
 			double m_alpha;//used in reduced graph as parameter for decomposition
 			std::vector<std::pair<octomap::point3d,double> > m_nodes; //coord,size
 			std::vector<double> m_cost;

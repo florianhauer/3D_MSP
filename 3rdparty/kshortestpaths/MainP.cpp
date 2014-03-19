@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 #include "GraphElements.h"
 #include "Graph.h"
 #include "DijkstraShortestPathAlg.h"
@@ -23,22 +24,36 @@ using namespace kshortestpaths;
 void testDijkstraGraph()
 {
 	kshortestpaths::Graph my_graph;
-	for(int i=0;i<7;++i){
-		my_graph.add_vertex(i,0.3);
+	for(int i=0;i<10;++i){
+		for(int j=0;j<10;++j){
+			my_graph.add_vertex(10*i+j,sqrt(i*i+j*j));
+		}
 	}
-	my_graph.add_vertex(7,0.0);
-	for(int i=0;i<5;++i){
-		my_graph.add_edge(i,i+1,0.4);
-		my_graph.add_edge(i,i+2,0.5);
-		my_graph.add_edge(i,i+3,0.6);
+	for(int i=9;i>0;--i){
+		for(int j=9;j>0;--j){
+			my_graph.add_edge(10*i+j,10*i+j-1,1.0);
+			my_graph.add_edge(10*i+j,10*(i-1)+j,1.0);
+			my_graph.add_edge(10*i+j,10*(i-1)+j-1,1.5);
+		}
 	}
 
 	//Graph* my_graph_pt = new Graph("../data/test_1");
 	DijkstraShortestPathAlg shortest_path_alg(&my_graph);
 	BasePath* result =
 		shortest_path_alg.get_shortest_path(
-				my_graph.get_vertex(0), my_graph.get_vertex(7));
+				my_graph.get_vertex(99), my_graph.get_vertex(0));
 	result->PrintOut(cout);
+//	std::map<BaseVertex*, double> updated_nodes=shortest_path_alg.m_mpStartDistanceIndex;
+//	for(int i=0;i<10;++i){
+//		for(int j=0;j<10;++j){
+//				if(updated_nodes.find(my_graph.get_vertex(10*i+j))!=updated_nodes.end()){
+//					std::cout<< "X";
+//				}else{
+//					std::cout<< "O";
+//				}
+//		}
+//		std::cout<< std::endl;
+//	}
 }
 
 void testDijkstraGraphDisconnectedGraph()
