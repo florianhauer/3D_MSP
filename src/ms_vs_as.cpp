@@ -2,11 +2,12 @@
 #include "MSP3D.h"
 #include <octomap_utils.h>
 #include <cstdlib>
+#include <ctime>
 //#include <ctime>
 
 int main(int argc, char** argv) {
-
-	int max_depth=6;
+	srand (time(NULL));
+	int max_depth=5;
 	//double max_size=0.1*pow(2,16)*sqrt(3);
 	octomap::OcTree tree(0.1);  // create empty tree with resolution 0.1
 	int mm=32;
@@ -36,7 +37,7 @@ int main(int argc, char** argv) {
 			double lim=tree.getNodeSize(max_depth);
 			if((it.getDepth()==max_depth && pt.x()>0 && pt.x()<lim && !(pt.z()>(tree.getNodeSize(0)/2.0-lim) && pt.y()>(tree.getNodeSize(0)/2.0-lim)))
 			//		||	(it.getDepth()==max_depth && pt.x()>-2*lim && pt.x()<-lim && !(pt.z()<-(tree.getNodeSize(0)/2.0-lim) && pt.y()<-(tree.getNodeSize(0)/2.0-lim)))
-					|| rand()%25==1
+					|| rand()%10==1
 			)	{
 //				std::cout<< pt << std::endl;
 				it->setLogOdds(octomap::logodds(1));
@@ -57,6 +58,7 @@ int main(int argc, char** argv) {
 	}
 	//*/
 
+	std::cout << "nb obstacles : "  << obstacles.size() << std::endl;
 
 	tree.updateInnerOccupancy();
 

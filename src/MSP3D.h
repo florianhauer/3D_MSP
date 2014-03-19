@@ -67,6 +67,7 @@ namespace msp{
 			octomap::point3d m_current_coord;
 			octomap::OcTree m_tree;
 			int m_start_index;
+			int m_nb_backtrack;
 			int m_end_index;
 			bool m_path_found;
 			std::deque<octomap::point3d> m_current_path;

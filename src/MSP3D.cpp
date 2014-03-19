@@ -29,9 +29,13 @@ bool MSP3D::init(octomap::point3d start,octomap::point3d end){
 		m_current_coord=m_tree.keyToCoord(m_start);
 		m_start_coord=m_tree.keyToCoord(m_start);
 		m_end_coord=m_tree.keyToCoord(m_end);
+		m_current_path.clear();
+		m_path_cost.clear();
 		m_current_path.push_back(m_start_coord);
+		m_misleading.clear();
 		m_misleading[m_current_coord]=std::set<octomap::point3d,Point3D_Less>();
 		m_nb_step=0;
+		m_nb_backtrack=0;
 //		std::stringstream it_name;
 //		it_name << "iteration" << m_nb_step << ".ot";
 //		visu_init(std::string(it_name.str()));
@@ -173,6 +177,7 @@ bool MSP3D::step(){
 		//go back // if path empty => no solution return false
 		//m_visited[m_current_coord]=0;
 		m_misleading[m_current_coord].clear();
+		m_nb_backtrack++;
 		m_current_path.pop_back();
 		if(m_current_path.size()==0){
 			//no possible path
@@ -186,11 +191,16 @@ bool MSP3D::step(){
 }
 
 bool MSP3D::run(){
+	if(m_tree.search(m_start)->getOccupancy()>1-m_epsilon || m_tree.search(m_end)->getOccupancy()>1-m_epsilon){
+		std::cout<<"start or end is an obstacle"<< std::endl;
+		return false;
+	}
 	while(step()){/*std::cout<<*/++m_nb_step;}
 //	std::stringstream it_name;
 //	it_name << "iteration" << m_nb_step << ".ot";
 //	kshortestpaths::BasePath result(std::vector<kshortestpaths::BaseVertex*>(),0);
 //	visu(std::string(it_name.str()),&result);
+	std::cout<< "NB backtrack : " << m_nb_backtrack << std::endl;
 	if(m_path_found){
 		return true;
 	}else{
@@ -263,7 +273,7 @@ void MSP3D::add_node_to_reduced_vertices(octomap::OcTreeNode* node,octomap::poin
 //	std::cout << coord << " , " << size << " , " << node->getOccupancy() <<std::endl;
 	if((coord-m_current_coord).norm()>m_alpha*size  || !(node->hasChildren())){
 		if(!inPath(coord,size)
-				&& cost_func(node->getOccupancy())<1-m_epsilon
+				&& node->getOccupancy()<1-m_epsilon
 				&& m_current_forbidden.find(coord)==m_current_forbidden.end()
 			){
 			m_nodes.push_back(std::pair<octomap::point3d,double>(coord,size));
@@ -305,6 +315,7 @@ void MSP3D::reducedGraph(){
 //			std::cout<<"start: "<< m_nodes[i].first <<std::endl;
 			if(m_start_index!=-1){
 				std::cout << "2 start nodes, fail" << std::endl;
+				return;
 				//exit(1);
 			}
 			m_start_index=i;
@@ -313,6 +324,7 @@ void MSP3D::reducedGraph(){
 //			std::cout<<"end: "<< m_nodes[i].first <<std::endl;
 			if(m_end_index!=-1){
 				std::cout << "2 end nodes, fail" << std::endl;
+				return;
 				//exit(1);
 			}
 			m_end_index=i;
@@ -320,9 +332,11 @@ void MSP3D::reducedGraph(){
 	}
 	if(m_start_index==-1){
 		std::cout << "0 start node, fail" << std::endl;
+		return;
 	}
 	if(m_end_index==-1){
 		std::cout << "0 end node, fail" << std::endl;
+		return;
 	}
 	for(int i=0;i<l;++i){
 		for(int j=i+1;j<l;++j){
