@@ -13,5 +13,8 @@ TARGET_LINK_LIBRARIES(test_on_map octomap octomath kshortestpaths)
 ADD_EXECUTABLE(test_on_CAMVID test_on_CAMVID.cpp MSP3D.cpp)
 TARGET_LINK_LIBRARIES(test_on_CAMVID octomap octomath kshortestpaths)
 
+ADD_EXECUTABLE(test_on_LEUVEN test_on_LEUVEN.cpp MSP3D.cpp)
+TARGET_LINK_LIBRARIES(test_on_LEUVEN octomap octomath kshortestpaths)
+
 ADD_EXECUTABLE(ms_vs_as ms_vs_as.cpp MSP3D.cpp)
 TARGET_LINK_LIBRARIES(ms_vs_as octomap octomath kshortestpaths)

@@ -10,7 +10,7 @@
 
 
 namespace msp{
-MSP3D::MSP3D(octomap::OcTree &tree, int max_depth):m_tree(tree),m_path_found(false),m_alpha(1.0),m_eps(tree.getResolution()/10.0),m_max_tree_depth(max_depth),m_lambda1(0.999),m_lambda2(0.001) {
+MSP3D::MSP3D(octomap::OcTree &tree, int max_depth):m_tree(tree),m_path_found(false),m_visu(false),m_alpha(1.0),m_eps(tree.getResolution()/10.0),m_max_tree_depth(max_depth),m_lambda1(0.999),m_lambda2(0.001) {
 	m_M=100*pow(8,max_depth);
 	m_epsilon=pow(0.5,1+3*m_max_tree_depth);
 	m_child_dir.push_back(octomap::point3d(-1,-1,-1));
@@ -36,11 +36,13 @@ bool MSP3D::init(octomap::point3d start,octomap::point3d end){
 		m_misleading[m_current_coord]=std::set<octomap::point3d,Point3D_Less>();
 		m_nb_step=0;
 		m_nb_backtrack=0;
-//		std::stringstream it_name;
-//		it_name << "iteration" << m_nb_step << ".ot";
-//		visu_init(std::string(it_name.str()));
-//		std::cout << it_name.str() << std::endl;
-		m_nb_step++;
+		if(m_visu){
+			std::stringstream it_name;
+			it_name << "iteration" << m_nb_step << ".ot";
+			visu_init(std::string(it_name.str()));
+			std::cout << it_name.str() << std::endl;
+			m_nb_step++;
+		}
 		return true;
 	}else{
 		std::cout << "start or goal not on map" << std::endl;
@@ -110,10 +112,12 @@ bool MSP3D::step(){
 		//go forward // if goal return false;
 		kshortestpaths::BasePath* result =yenAlg.next();
 //		std::cout << "Cost: " << result->Weight() << " Length: " << result->length() << std::endl;
-//		std::stringstream it_name;
-//		it_name << "iteration" << m_nb_step << ".ot";
-//		visu(std::string(it_name.str()),result);
-//		std::cout << it_name.str() << std::endl;
+		if(m_visu){
+			std::stringstream it_name;
+			it_name << "iteration" << m_nb_step << ".ot";
+			visu(std::string(it_name.str()),result);
+			std::cout << it_name.str() << std::endl;
+		}
 		if(result->Weight()>=m_M){
 			//no path without obstacles from current to finish
 //			std::cout << "shortest path with obstacles" << std::endl;
@@ -140,19 +144,21 @@ bool MSP3D::step(){
 			m_current_path.push_back(m_nodes[next_point_id].first);
 			m_path_cost.push_back(m_cost[next_point_id]);
 
-			int mv_fwd=2;
-			while(result->length()>mv_fwd){
-				int next_point_id2=result->GetVertex(mv_fwd)->getID();
-				//TODO : repalce test by if next vertex at finest resolution, aka, no children
-				if(m_nodes[next_point_id2].second==m_nodes[next_point_id].second){
-					//m_visited[m_nodes[next_point_id].first]=	m_visited[m_nodes[next_point_id].first]+1;
-					m_misleading[m_nodes[next_point_id].first].insert(m_nodes[next_point_id2].first);
-					m_current_path.push_back(m_nodes[next_point_id2].first);
-					m_path_cost.push_back(m_cost[next_point_id2]);
-					next_point_id=next_point_id2;
-					++mv_fwd;
-				}else{
-					break;
+			if(m_speed_up){
+				int mv_fwd=2;
+				while(result->length()>mv_fwd){
+					int next_point_id2=result->GetVertex(mv_fwd)->getID();
+					//TODO : repalce test by if next vertex at finest resolution, aka, no children
+					if(m_nodes[next_point_id2].second==m_nodes[next_point_id].second){
+						//m_visited[m_nodes[next_point_id].first]=	m_visited[m_nodes[next_point_id].first]+1;
+						m_misleading[m_nodes[next_point_id].first].insert(m_nodes[next_point_id2].first);
+						m_current_path.push_back(m_nodes[next_point_id2].first);
+						m_path_cost.push_back(m_cost[next_point_id2]);
+						next_point_id=next_point_id2;
+						++mv_fwd;
+					}else{
+						break;
+					}
 				}
 			}
 
@@ -166,6 +172,10 @@ bool MSP3D::step(){
 			if(next_point_id==m_end_index){
 				std::cout << "goal reached" << std::endl;
 				m_path_found=true;
+				std::stringstream it_name;
+				it_name << "iteration0.ot";
+				visu(std::string(it_name.str()),result);
+				std::cout << it_name.str() << std::endl;
 				return false;
 			}else{
 				return true;
@@ -196,10 +206,12 @@ bool MSP3D::run(){
 		return false;
 	}
 	while(step()){/*std::cout<<*/++m_nb_step;}
-//	std::stringstream it_name;
-//	it_name << "iteration" << m_nb_step << ".ot";
-//	kshortestpaths::BasePath result(std::vector<kshortestpaths::BaseVertex*>(),0);
-//	visu(std::string(it_name.str()),&result);
+	if(m_visu){
+		std::stringstream it_name;
+		it_name << "iteration" << m_nb_step << ".ot";
+		kshortestpaths::BasePath result(std::vector<kshortestpaths::BaseVertex*>(),0);
+		visu(std::string(it_name.str()),&result);
+	}
 	std::cout<< "NB backtrack : " << m_nb_backtrack << std::endl;
 	if(m_path_found){
 		return true;

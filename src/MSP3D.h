@@ -39,6 +39,8 @@ namespace msp{
 			std::deque<octomap::point3d> getPath();
 			double getPathCost();
 			void setAlpha(double a){m_alpha=a;}
+			void setSpeedUp(bool a){m_speed_up=a;}
+			void setVisu(bool a){m_visu=a;}
 			void setObstacles(std::vector<std::pair<octomap::point3d,double> > obstacles);
 			std::vector<octomap::point3d> m_child_dir;
 
@@ -69,6 +71,8 @@ namespace msp{
 			int m_start_index;
 			int m_nb_backtrack;
 			int m_end_index;
+			bool m_speed_up;
+			bool m_visu;
 			bool m_path_found;
 			std::deque<octomap::point3d> m_current_path;
 			kshortestpaths::Graph m_graph;

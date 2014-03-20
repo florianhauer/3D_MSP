@@ -77,11 +77,13 @@ int main(int argc, char** argv) {
 	algo.runAs();
 	std::vector<double> alphas;
 	alphas.push_back(1.0);
-	alphas.push_back(1.25);
-	alphas.push_back(1.5);
-	alphas.push_back(1.75);
+//	alphas.push_back(1.25);
+//	alphas.push_back(1.5);
+//	alphas.push_back(1.75);
 	alphas.push_back(2.0);
-	alphas.push_back(3.0);
+	alphas.push_back(5.0);
+	std::cout <<std::endl << "Run algo with speed up " << std::endl;
+	algo.setSpeedUp(true);
 	for(int i=alphas.size()-1;i>=0;--i){
 		algo.init(start,end);
 		algo.setAlpha(alphas[i]);
@@ -103,5 +105,29 @@ int main(int argc, char** argv) {
 			  std::cout << "Time to run: " << (clock()-tstart)*1.0/CLOCKS_PER_SEC << std::endl;
 			std::cout << "No path exists between the given start and end points" << std::endl;
 		}
-}
+	}
+	std::cout <<std::endl << "Run algo without speed up " << std::endl;
+	algo.setSpeedUp(false);
+	for(int i=alphas.size()-1;i>=0;--i){
+		algo.init(start,end);
+		algo.setAlpha(alphas[i]);
+	//	cout<<"Press ENTER to continue....."<<endl<<endl;
+	//	cin.ignore(1);
+		std::cout <<std::endl << "Run algo for alpha " << alphas[i] << std::endl;
+		double scale=tree.getResolution()*pow(2,16-max_depth)/(1-8);
+		  clock_t tstart = clock();
+		if(algo.run()){
+			  std::cout << "Time to run: " << (clock()-tstart)*1.0/CLOCKS_PER_SEC << std::endl;
+			std::deque<octomap::point3d> sol=algo.getPath();
+			std::cout << "Path length: " << sol.size() << std::endl;
+			std::cout << "Path cost: " << algo.getPathCost() << std::endl;
+	//		std::cout << "Path :" << std::endl;
+	//		for(std::deque<octomap::point3d>::iterator it=sol.begin(),end=sol.end();it!=end;++it){
+	//			std::cout << (((*it)*(1/scale))+octomap::point3d(3.5,3.5,3.5))*(1.0/7.0) << std::endl;
+	//		}
+		}else{
+			  std::cout << "Time to run: " << (clock()-tstart)*1.0/CLOCKS_PER_SEC << std::endl;
+			std::cout << "No path exists between the given start and end points" << std::endl;
+		}
+	}
 }
