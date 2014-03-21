@@ -13,6 +13,7 @@ namespace msp{
 MSP3D::MSP3D(octomap::OcTree &tree, int max_depth):m_tree(tree),m_path_found(false),m_visu(false),m_alpha(1.0),m_eps(tree.getResolution()/10.0),m_max_tree_depth(max_depth),m_lambda1(0.999),m_lambda2(0.001) {
 	m_M=100*pow(8,max_depth);
 	m_epsilon=pow(0.5,1+3*m_max_tree_depth);
+	//m_epsilon=0.0000025;
 	m_child_dir.push_back(octomap::point3d(-1,-1,-1));
 	m_child_dir.push_back(octomap::point3d(1,-1,-1));
 	m_child_dir.push_back(octomap::point3d(-1,1,-1));
@@ -172,10 +173,10 @@ bool MSP3D::step(){
 			if(next_point_id==m_end_index){
 				std::cout << "goal reached" << std::endl;
 				m_path_found=true;
-				std::stringstream it_name;
-				it_name << "iteration0.ot";
-				visu(std::string(it_name.str()),result);
-				std::cout << it_name.str() << std::endl;
+//				std::stringstream it_name;
+//				it_name << "iteration0.ot";
+//				visu_end(std::string(it_name.str()));
+//				std::cout << it_name.str() << std::endl;
 				return false;
 			}else{
 				return true;
@@ -588,6 +589,57 @@ void MSP3D::visu(std::string filename, kshortestpaths::BasePath* path){
 //		std::cout << m_nodes[path->GetVertex(i)->getID()].first <<std::endl;
 	}
 
+
+	binary_outfile.close();
+
+	//exit(0);
+}
+
+void MSP3D::visu_end(std::string filename,octomap::ColorOcTree* tree1){
+
+    std::ofstream binary_outfile( filename.c_str(), std::ios_base::binary);
+
+    if (!binary_outfile.is_open()){
+      std::cout<<"Filestream to "<< filename << " not open, nothing written."<<std::endl;
+      exit(1);
+    }
+
+    //tree1->writeBinary(binary_outfile);
+
+
+	//previous path
+	binary_outfile /*<< std::endl << "ppath" */<< m_current_path.size();
+//	std::cout << std::endl << "ppath" << m_current_path.size();
+	for(std::deque<octomap::point3d>::iterator it=m_current_path.begin(),end=m_current_path.end();it!=end;++it){
+		it->writeBinary(binary_outfile);
+//		std::cout << *it <<std::endl;
+	}
+
+//	int un=1;
+//	//future path
+//	binary_outfile /*<< std::endl << "fpath"*/ << un;
+////	std::cout << std::endl << "fpath" << m_current_path.size();
+//	m_end_coord.writeBinary(binary_outfile);
+//	binary_outfile << m_tree.getResolution();
+//
+//	//start
+//	//binary_outfile << std::endl << "start";
+//	m_start_coord.writeBinary(binary_outfile);
+////	std::cout << "start " << m_start_coord <<std::endl;
+//	//end
+//	//binary_outfile << std::endl << "end";
+//	m_end_coord.writeBinary(binary_outfile);
+////	std::cout << "end " << m_end_coord <<std::endl;
+//
+//	//obstacles
+//	binary_outfile /*<< std::endl << "fpath"*/ << m_obstacles.size();
+////	std::cout << std::endl << "fpath" << m_current_path.size();
+//	for(int i=0;i<m_obstacles.size();++i){
+//		m_obstacles[i].first.writeBinary(binary_outfile);
+//		binary_outfile << m_obstacles[i].second;
+////		std::cout << m_nodes[path->GetVertex(i)->getID()].first <<std::endl;
+//	}
+//
 
 	binary_outfile.close();
 

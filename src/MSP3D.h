@@ -43,6 +43,7 @@ namespace msp{
 			void setVisu(bool a){m_visu=a;}
 			void setObstacles(std::vector<std::pair<octomap::point3d,double> > obstacles);
 			std::vector<octomap::point3d> m_child_dir;
+			void visu_end(std::string filename,octomap::ColorOcTree* tree1);
 
 		protected:
 			bool inPath(octomap::point3d pt,double size);

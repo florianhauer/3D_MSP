@@ -2,6 +2,7 @@
 #include "MSP3D.h"
 #include <octomap_utils.h>
 #include <AbstractOcTree.h>
+#include <sstream>
 //#include <ctime>
 
 void depth_traversal(octomap::OcTreeNode* node,octomap::point3d coord, double size){
@@ -97,6 +98,11 @@ int main(int argc, char** argv) {
 		std::deque<octomap::point3d> sol=algo.getPath();
 		std::cout << "Path length: " << sol.size() << std::endl;
 		std::cout << "Path cost: " << algo.getPathCost() << std::endl;
+
+		std::stringstream it_name;
+		it_name << "path.ttt";
+		algo.visu_end(std::string(it_name.str()),(octomap::ColorOcTree*)tree1);
+
 //		std::cout << "Path :" << std::endl;
 //		for(std::deque<octomap::point3d>::iterator it=sol.begin(),end=sol.end();it!=end;++it){
 //			std::cout << (((*it)*(1/scale))+octomap::point3d(3.5,3.5,3.5))*(1.0/7.0) << std::endl;

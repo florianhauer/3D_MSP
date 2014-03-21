@@ -2,6 +2,7 @@
 #include "MSP3D.h"
 #include <octomap_utils.h>
 #include <AbstractOcTree.h>
+#include <sstream>
 //#include <ctime>
 
 void depth_traversal(octomap::OcTreeNode* node,octomap::point3d coord, double size){
@@ -24,7 +25,7 @@ void depth_traversal(octomap::OcTreeNode* node,octomap::point3d coord, double si
 
 int main(int argc, char** argv) {
 
-	int max_depth=13;
+	int max_depth=15;
 	std::vector<std::pair<octomap::point3d,double> > obstacles;
 	obstacles.push_back(std::pair<octomap::point3d,double>(octomap::point3d(0,0,0),0.0001));
 
@@ -38,9 +39,19 @@ int main(int argc, char** argv) {
 
 	std::cout<< "Tree loaded" << std::endl;
 
-	tree->updateInnerOccupancy();
+	//tree->updateInnerOccupancy();
 
 	//depth_traversal(tree->getRoot(),octomap::point3d(0,0,0),tree->getNodeSize(0));
+	for(octomap::OcTree::tree_iterator it = tree->begin_tree(),	end=tree->end_tree(); it!= end; ++it)
+		{
+		if(it.getDepth()>14 && it.getCoordinate().norm()>20  && it.getCoordinate().z()<2.5)
+			if(it->getOccupancy()>0.5)
+				it->setLogOdds(octomap::logodds(1.0));
+			else
+				it->setLogOdds(octomap::logodds(0.0));
+		else
+			it->setLogOdds(octomap::logodds(1.0));
+		}
 
 	for(octomap::OcTree::tree_iterator it = tree->begin_tree(),	end=tree->end_tree(); it!= end; ++it)
 	{
@@ -49,6 +60,7 @@ int main(int argc, char** argv) {
 				for(int i=0;i<8;++i){
 					if(!it->childExists(i)){
 						it->createChild(i);
+						it->getChild(i)->setLogOdds(octomap::logodds(1.0));
 					}
 				}
 			}
@@ -61,6 +73,8 @@ int main(int argc, char** argv) {
 			}
 		}
 	}
+
+	tree->updateInnerOccupancy();
 
 //	std::ofstream binary_outfile( "copytree.bt", std::ios_base::binary);
 //	tree->writeBinary(binary_outfile);
@@ -83,8 +97,25 @@ int main(int argc, char** argv) {
 
 	std::cout << "Create algo" << std::endl;
 	msp::MSP3D algo(*tree,max_depth);
-	octomap::point3d start(30.0,60.0,0.0);
-	octomap::point3d end(3.0,-30.0,0.0);
+	octomap::point3d start(1.0,51.5,2.0);
+	octomap::point3d end(1.0,-25.5,2.0);
+//	std::ofstream binary_outfile( "path.ttt", std::ios_base::binary);
+//
+//	    if (!binary_outfile.is_open()){
+//	      std::cout<<"Filestream to " << " not open, nothing written."<<std::endl;
+//	      exit(1);
+//	    }
+//
+//	    //tree1->writeBinary(binary_outfile);
+//
+//	    int deux=2;
+//		//previous path
+//		binary_outfile /*<< std::endl << "ppath" */<< deux;
+//	//	std::cout << std::endl << "ppath" << m_current_path.size();
+//		start.writeBinary(binary_outfile);
+//		end.writeBinary(binary_outfile);
+
+	//		std::cout << *it <<std::endl;
 	std::cout << "Init algo" << std::endl;
 	algo.setObstacles(obstacles);
 	algo.setVisu(false);
@@ -97,6 +128,9 @@ int main(int argc, char** argv) {
 		std::deque<octomap::point3d> sol=algo.getPath();
 		std::cout << "Path length: " << sol.size() << std::endl;
 		std::cout << "Path cost: " << algo.getPathCost() << std::endl;
+		std::stringstream it_name;
+		it_name << "path.ttt";
+		algo.visu_end(std::string(it_name.str()),(octomap::ColorOcTree*)tree1);
 //		std::cout << "Path :" << std::endl;
 //		for(std::deque<octomap::point3d>::iterator it=sol.begin(),end=sol.end();it!=end;++it){
 //			std::cout << (((*it)*(1/scale))+octomap::point3d(3.5,3.5,3.5))*(1.0/7.0) << std::endl;
